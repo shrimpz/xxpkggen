@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="xxlib">
+      <UniqueIdentifier>{47cebb18-858d-4345-b65c-ddec4a85a8f3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="xxlib.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="xxlib_bytebuffer.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="xxlib_dtoa_milo.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="xxlib_list.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="xxlib_pool.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="xxlib_scopeguard.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="xxlib_string.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="xxlib_utils_calc.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="xxlib_utils_hash.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="xxlib_utils_str.cpp">
+      <Filter>xxlib</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="CS.cpp" />
+    <ClCompile Include="CS_EnumToString.cpp" />
+    <ClCompile Include="CS_Handler.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="xxlib.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_aligned_alloc.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_bytebuffer.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_bytebuffer.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_console.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_console.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_defines.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_dict.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_dict.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_dtoa_milo.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_hash.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_hash.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_links.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_links.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_list.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_list.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_pool.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_queue.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_queue.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_scopeguard.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_simpledate.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_singleton.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_stopwatch.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_string.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_string.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_timeouter.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_utils_calc.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_utils_hash.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_utils_hash.hpp">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_utils_str.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="CS.h" />
+    <ClInclude Include="CS_EnumToString.h" />
+  </ItemGroup>
+</Project>

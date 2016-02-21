@@ -7,8 +7,8 @@
     <ProjectGuid>{361233AF-7DA4-4B60-BB7B-957168E7E081}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PackageTemplate_SC</RootNamespace>
-    <AssemblyName>PackageTemplate_SC</AssemblyName>
+    <RootNamespace>PackageTemplate_SS</RootNamespace>
+    <AssemblyName>PackageTemplate_SS</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SC.cs" />
+    <Compile Include="SS.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

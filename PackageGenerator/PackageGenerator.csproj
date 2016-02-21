@@ -105,7 +105,7 @@
       <Project>{839f4e3f-eab3-4486-a0fa-e08a449e16b9}</Project>
       <Name>PackageTemplate_CS</Name>
     </ProjectReference>
-    <ProjectReference Include="..\PackageTemplate_SC\PackageTemplate_SC.csproj">
+    <ProjectReference Include="..\PackageTemplate_SS\PackageTemplate_SS.csproj">
       <Project>{361233af-7da4-4b60-bb7b-957168e7e081}</Project>
       <Name>PackageTemplate_SC</Name>
     </ProjectReference>

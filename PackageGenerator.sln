@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageLibrary", "PackageLi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{70641255-B1EA-4A1F-8250-947753117DD2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageTemplate_SC", "PackageTemplate_SC\PackageTemplate_SC.csproj", "{361233AF-7DA4-4B60-BB7B-957168E7E081}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageTemplate_SS", "PackageTemplate_SS\PackageTemplate_SS.csproj", "{361233AF-7DA4-4B60-BB7B-957168E7E081}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageTemplate_CS", "PackageTemplate_CS\PackageTemplate_CS.csproj", "{839F4E3F-EAB3-4486-A0FA-E08A449E16B9}"
 EndProject

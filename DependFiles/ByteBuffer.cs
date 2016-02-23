@@ -452,7 +452,7 @@ namespace xxlib
         }
         public void Read( ref ByteBuffer v )
         {
-            v.dataLen = ReadLength();
+            v.dataLen = ReadLength( 0, 0 );
             Array.Resize( ref v.buf, v.dataLen );
             Read( ref v.buf );
         }
@@ -556,7 +556,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<string> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<string> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -571,7 +571,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<bool> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<bool> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -610,7 +610,7 @@ namespace xxlib
             Read( ref vs, 0, 0 );
         }
 
-        public void Read<T>( ref List<List<T>> vs, int minLen = 0, int maxLen = 0 ) where T : struct, IBBReader
+        public void Read<T>( ref List<List<T>> vs, int minLen, int maxLen ) where T : struct, IBBReader
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -626,7 +626,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<List<string>> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<List<string>> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -641,7 +641,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<List<bool>> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<List<bool>> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -961,6 +961,11 @@ Lab1:
             Bit7Read32( ref len, buf, ref offset, dataLen );
             if( len < minLen || ( maxLen > 0 && len > maxLen ) ) throw new OverflowException();
             return (int)len;
+        }
+
+        protected void WriteLength( int v )
+        {
+            VarWrite( (uint)v );
         }
 
         #endregion

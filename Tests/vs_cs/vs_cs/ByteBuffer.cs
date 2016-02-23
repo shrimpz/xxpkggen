@@ -4,19 +4,19 @@ using System.Text;
 
 namespace xxlib
 {
-    #region interface IBBReader/Writer
-    public interface IBBReader
-    {
-        void ReadFrom( ByteBuffer tb );
-    }
-
-
-    public interface IBBWriter
-    {
-        void WriteTo( ByteBuffer tb );
-    }
-    #endregion
-
+    /// <summary>
+    /// interface 在本代码文件的尾部
+    /// 为简化，不支持“空”，“指针”的概念（ Write 时传入 null 是不被支持的, 要自己判断 )
+    /// 基本上这个类和 xxlib.ByteBuffer 的设计，实现原理，使用方式几乎一样
+    /// 区别在于， c# 版 Read 需要 靠 try catch 来捕获错误( 长度超 Limit 也是 OverflowException )
+    /// 读写分作两种：定长( memcpy ), 变长( 7bit ), 视需求选用( 模板里面可以用相应的 Attribute 设置具体的 field 使用变长存储 )。
+    /// 可变长类型：int, long, double
+    /// 支持关键字级别基础数据类型及其数组( 算定长，不会记录长度 ),
+    /// 支持 DateTime, string( 会记录长度 ), ByteBuffer( 会记录长度 ), List( 会记录长度 )
+    /// 支持 bool 数组或 List 的位压缩存储
+    /// 支持 List 最多嵌套 2 层
+    /// 支持 非数组容器还原时限长
+    /// </summary>
     public partial class ByteBuffer
     {
         public byte[] buf;
@@ -27,11 +27,10 @@ namespace xxlib
 
         public ByteBuffer( int capacity )
         {
-            Assign( new byte[ capacity ], 0 );
+            Assign( new byte[ Round2n( (uint)capacity ) ], 0 );
         }
 
-        public ByteBuffer()
-            : this( 1024 )
+        public ByteBuffer() : this( 1024 )
         {
         }
 
@@ -47,7 +46,7 @@ namespace xxlib
 
         #endregion
 
-        #region tool funcs
+        #region misc funcs
 
         public void Assign( byte[] buf_, int dataLen_ )
         {
@@ -83,18 +82,12 @@ namespace xxlib
 
         public void Reserve( int capacity )
         {
-            if( capacity <= buf.Length )
-            {
-                return;
-            }
-            byte[] newbuf = new byte[ capacity * 2 ];
-            Array.Copy( buf, 0, newbuf, 0, dataLen );
-            buf = newbuf;
+            if( capacity <= buf.Length ) return;
+            ReserveCore( capacity );
         }
 
-        public byte IndexAt( int idx )
+        public byte At( int idx )
         {
-
             return buf[ idx ];
         }
 
@@ -104,8 +97,9 @@ namespace xxlib
 
         public void Dump( ref StringBuilder s )
         {
-            BinaryHelper.Dump( ref s, buf, dataLen );
+            Dump( ref s, buf, dataLen );
         }
+
         public void Dump()
         {
             var s = new StringBuilder();
@@ -126,7 +120,7 @@ namespace xxlib
 
         public void Write( byte v )
         {
-            Reserve( dataLen + 1 );
+            if( dataLen + 1 > buf.Length ) ReserveCore( dataLen + 1 );
             buf[ dataLen ] = v;
             dataLen++;
         }
@@ -136,9 +130,9 @@ namespace xxlib
         }
         public void Write( ushort v )
         {
-            Reserve( dataLen + 2 );
-            buf[ dataLen ] = (byte)(v & 0xff);
-            buf[ dataLen + 1 ] = (byte)((v & 0xff00) >> 8);
+            if( dataLen + 2 > buf.Length ) ReserveCore( dataLen + 2 );
+            buf[ dataLen ] = (byte)( v & 0xff );
+            buf[ dataLen + 1 ] = (byte)( ( v & 0xff00 ) >> 8 );
             dataLen += 2;
         }
         public void Write( short v )
@@ -147,11 +141,11 @@ namespace xxlib
         }
         public void Write( uint v )
         {
-            Reserve( dataLen + 4 );
-            buf[ dataLen ] = (byte)(v & 0xff);
-            buf[ dataLen + 1 ] = (byte)((v & 0xff00) >> 8);
-            buf[ dataLen + 2 ] = (byte)((v & 0xff0000) >> 16);
-            buf[ dataLen + 3 ] = (byte)((v & 0xff000000) >> 24);
+            if( dataLen + 4 > buf.Length ) ReserveCore( dataLen + 4 );
+            buf[ dataLen ] = (byte)( v & 0xff );
+            buf[ dataLen + 1 ] = (byte)( ( v & 0xff00 ) >> 8 );
+            buf[ dataLen + 2 ] = (byte)( ( v & 0xff0000 ) >> 16 );
+            buf[ dataLen + 3 ] = (byte)( ( v & 0xff000000 ) >> 24 );
             dataLen += 4;
         }
         public void Write( int v )
@@ -160,15 +154,15 @@ namespace xxlib
         }
         public void Write( ulong v )
         {
-            Reserve( dataLen + 8 );
+            if( dataLen + 8 > buf.Length ) ReserveCore( dataLen + 8 );
             buf[ dataLen + 0 ] = (byte)v;
-            buf[ dataLen + 1 ] = (byte)(v >> 8);
-            buf[ dataLen + 2 ] = (byte)(v >> 16);
-            buf[ dataLen + 3 ] = (byte)(v >> 24);
-            buf[ dataLen + 4 ] = (byte)(v >> 32);
-            buf[ dataLen + 5 ] = (byte)(v >> 40);
-            buf[ dataLen + 6 ] = (byte)(v >> 48);
-            buf[ dataLen + 7 ] = (byte)(v >> 56);
+            buf[ dataLen + 1 ] = (byte)( v >> 8 );
+            buf[ dataLen + 2 ] = (byte)( v >> 16 );
+            buf[ dataLen + 3 ] = (byte)( v >> 24 );
+            buf[ dataLen + 4 ] = (byte)( v >> 32 );
+            buf[ dataLen + 5 ] = (byte)( v >> 40 );
+            buf[ dataLen + 6 ] = (byte)( v >> 48 );
+            buf[ dataLen + 7 ] = (byte)( v >> 56 );
             dataLen += 8;
         }
         public void Write( long v )
@@ -178,16 +172,16 @@ namespace xxlib
 
         public void Write( float v )
         {
-            var _buf = BitConverter.GetBytes(v);
-            Reserve( dataLen + 4 );
-            Array.Copy( _buf, 0, buf, dataLen, 4 );
+            var tmpbuf = BitConverter.GetBytes(v);
+            if( dataLen + 4 > buf.Length ) ReserveCore( dataLen + 4 );
+            Array.Copy( tmpbuf, 0, buf, dataLen, 4 );
             dataLen += 4;
         }
         public void Write( double v )
         {
-            var _buf = BitConverter.GetBytes(v);
-            Reserve( dataLen + 8 );
-            Array.Copy( _buf, 0, buf, dataLen, 8 );
+            var tmpbuf = BitConverter.GetBytes(v);
+            if( dataLen + 8 > buf.Length ) ReserveCore( dataLen + 8 );
+            Array.Copy( tmpbuf, 0, buf, dataLen, 8 );
             dataLen += 8;
         }
         public void Write( bool v )
@@ -199,16 +193,16 @@ namespace xxlib
             var sbuf = Encoding.UTF8.GetBytes( v );
             int sbufLen = sbuf.Length;
             WriteLength( sbufLen );
-            Reserve( dataLen + sbufLen );
+            if( dataLen + sbufLen > buf.Length ) ReserveCore( dataLen + sbufLen );
             Array.Copy( sbuf, 0, buf, dataLen, sbufLen );
             dataLen += sbufLen;
         }
         public void Write( DateTime v )
         {
-            Reserve( dataLen + 8 );
+            if( dataLen + 8 > buf.Length ) ReserveCore( dataLen + 8 );
             short year = (short)v.Year;
             buf[ dataLen + 0 ] = (byte)year;
-            buf[ dataLen + 1 ] = (byte)(year >> 8);
+            buf[ dataLen + 1 ] = (byte)( year >> 8 );
             buf[ dataLen + 2 ] = (byte)v.Month;
             buf[ dataLen + 3 ] = (byte)v.Day;
             buf[ dataLen + 4 ] = (byte)v.Hour;
@@ -252,15 +246,15 @@ namespace xxlib
         }
         public void Write( byte[] v )
         {
-            if( v == null ) throw new Exception( "v can't be null" );
-            Reserve( dataLen + v.Length );
-            Array.Copy( v, 0, buf, dataLen, v.Length );
-            dataLen += v.Length;
+            var vlen = v.Length;
+            if( dataLen + vlen > buf.Length ) ReserveCore( dataLen + vlen );
+            Reserve( dataLen + vlen );
+            Array.Copy( v, 0, buf, dataLen, vlen );
+            dataLen += vlen;
         }
         public void Write( byte[] v, int offset, int len )
         {
-            if( v == null ) throw new Exception( "v can't be null" );
-            Reserve( dataLen + len );
+            if( dataLen + len > buf.Length ) ReserveCore( dataLen + len );
             Array.Copy( v, offset, buf, dataLen, len );
             dataLen += len;
         }
@@ -268,7 +262,7 @@ namespace xxlib
         {
             var bits = v.Length;
             var bytes = ( bits + 7 ) >> 3;
-            Reserve( dataLen + bytes );
+            if( dataLen + bytes > buf.Length ) ReserveCore( dataLen + bytes );
             var mod = bits % 8;
             if( mod > 0 ) --bytes;
             byte n = 0;
@@ -291,7 +285,7 @@ namespace xxlib
                 var offset = bytes << 3;
                 for( var i = 0; i < mod; ++i )
                 {
-                    if( v[ offset + i ] ) n |= (byte)(1 << i);
+                    if( v[ offset + i ] ) n |= (byte)( 1 << i );
                 }
                 buf[ dataLen++ ] = n;
             }
@@ -318,7 +312,7 @@ namespace xxlib
             WriteLength( vs.Count );
             var bits = vs.Count;
             var bytes = ( bits + 7 ) >> 3;
-            Reserve( dataLen + bytes );
+            if( dataLen + bytes > buf.Length ) ReserveCore( dataLen + bytes );
             var mod = bits % 8;
             if( mod > 0 ) --bytes;
             byte n = 0;
@@ -341,7 +335,7 @@ namespace xxlib
                 var offset = bytes << 3;
                 for( var i = 0; i < mod; ++i )
                 {
-                    if( vs[ offset + i ] ) n |= (byte)(1 << i);
+                    if( vs[ offset + i ] ) n |= (byte)( 1 << i );
                 }
                 buf[ dataLen++ ] = n;
             }
@@ -387,42 +381,42 @@ namespace xxlib
         }
         public void Read( ref ushort v )
         {
-            v = (ushort)((0xff & buf[ offset ])
-                | (0xff00 & (buf[ offset + 1 ] << 8)));
+            v = (ushort)( ( 0xff & buf[ offset ] )
+                | ( 0xff00 & ( buf[ offset + 1 ] << 8 ) ) );
             offset += 2;
         }
         public void Read( ref short v )
         {
-            v = (short)((0xff & buf[ offset ])
-                | (0xff00 & (buf[ offset + 1 ] << 8)));
+            v = (short)( ( 0xff & buf[ offset ] )
+                | ( 0xff00 & ( buf[ offset + 1 ] << 8 ) ) );
             offset += 2;
         }
         public void Read( ref uint v )
         {
-            v = (uint)(buf[ offset ]
-                | (buf[ offset + 1 ] << 8)
-                | (buf[ offset + 2 ] << 16)
-                | (buf[ offset + 3 ] << 24));
+            v = (uint)( buf[ offset ]
+                | ( buf[ offset + 1 ] << 8 )
+                | ( buf[ offset + 2 ] << 16 )
+                | ( buf[ offset + 3 ] << 24 ) );
             offset += 4;
         }
         public void Read( ref int v )
         {
             v = buf[ offset ]
-                | (buf[ offset + 1 ] << 8)
-                | (buf[ offset + 2 ] << 16)
-                | (buf[ offset + 3 ] << 24);
+                | ( buf[ offset + 1 ] << 8 )
+                | ( buf[ offset + 2 ] << 16 )
+                | ( buf[ offset + 3 ] << 24 );
             offset += 4;
         }
         public void Read( ref ulong v )
         {
-            v = ((ulong)buf[ offset ])
-                | (((ulong)buf[ offset + 1 ] << 8))
-                | (((ulong)buf[ offset + 2 ] << 16))
-                | (((ulong)buf[ offset + 3 ] << 24))
-                | (((ulong)buf[ offset + 4 ] << 32))
-                | (((ulong)buf[ offset + 5 ] << 40))
-                | (((ulong)buf[ offset + 6 ] << 48))
-                | (((ulong)buf[ offset + 7 ] << 56));
+            v = ( (ulong)buf[ offset ] )
+                | ( ( (ulong)buf[ offset + 1 ] << 8 ) )
+                | ( ( (ulong)buf[ offset + 2 ] << 16 ) )
+                | ( ( (ulong)buf[ offset + 3 ] << 24 ) )
+                | ( ( (ulong)buf[ offset + 4 ] << 32 ) )
+                | ( ( (ulong)buf[ offset + 5 ] << 40 ) )
+                | ( ( (ulong)buf[ offset + 6 ] << 48 ) )
+                | ( ( (ulong)buf[ offset + 7 ] << 56 ) );
             offset += 8;
         }
         public void Read( ref long v )
@@ -458,7 +452,7 @@ namespace xxlib
         }
         public void Read( ref ByteBuffer v )
         {
-            v.dataLen = ReadLength();
+            v.dataLen = ReadLength( 0, 0 );
             Array.Resize( ref v.buf, v.dataLen );
             Read( ref v.buf );
         }
@@ -470,8 +464,6 @@ namespace xxlib
         }
         public void Read( ref DateTime v )
         {
-            if( offset + 8 > dataLen )
-                throw new Exception( "out of range" );
             short years = 0;
             Read( ref years );
             v = new DateTime( years,
@@ -511,7 +503,6 @@ namespace xxlib
         public void Read( ref bool[] vs )
         {
             var bytes = ( vs.Length + 7 ) >> 3;
-            if( dataLen < offset + bytes ) throw new Exception( "not enough data" );
             var p = offset;
             offset += bytes;
             var mod = vs.Length % 8;
@@ -520,14 +511,14 @@ namespace xxlib
             for( var i = 0; i < bytes; ++i )
             {
                 var n = buf[ p + i ];
-                vs[ idx + 0 ] = ((n & 1) > 0);
-                vs[ idx + 1 ] = ((n & 2) > 0);
-                vs[ idx + 2 ] = ((n & 4) > 0);
-                vs[ idx + 3 ] = ((n & 8) > 0);
-                vs[ idx + 4 ] = ((n & 16) > 0);
-                vs[ idx + 5 ] = ((n & 32) > 0);
-                vs[ idx + 6 ] = ((n & 64) > 0);
-                vs[ idx + 7 ] = ((n & 128) > 0);
+                vs[ idx + 0 ] = ( ( n & 1 ) > 0 );
+                vs[ idx + 1 ] = ( ( n & 2 ) > 0 );
+                vs[ idx + 2 ] = ( ( n & 4 ) > 0 );
+                vs[ idx + 3 ] = ( ( n & 8 ) > 0 );
+                vs[ idx + 4 ] = ( ( n & 16 ) > 0 );
+                vs[ idx + 5 ] = ( ( n & 32 ) > 0 );
+                vs[ idx + 6 ] = ( ( n & 64 ) > 0 );
+                vs[ idx + 7 ] = ( ( n & 128 ) > 0 );
                 idx += 8;
             }
             if( mod > 0 )
@@ -535,7 +526,7 @@ namespace xxlib
                 var n = buf[ p + bytes ];
                 for( var i = 0; i < mod; ++i )
                 {
-                    vs[ idx++ ] = ( (n & (1 << i)) > 0 );
+                    vs[ idx++ ] = ( ( n & ( 1 << i ) ) > 0 );
                 }
             }
         }
@@ -565,7 +556,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<string> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<string> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -580,14 +571,13 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<bool> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<bool> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
             if( len == 0 ) return;
 
             var bytes = ( len + 7 ) >> 3;
-            if( dataLen < offset + bytes ) throw new Exception( "not enough data" );
             var p = offset;
             offset += bytes;
             var mod = len % 8;
@@ -595,21 +585,21 @@ namespace xxlib
             for( var i = 0; i < bytes; ++i )
             {
                 var n = buf[ p + i ];
-                vs.Add( (n & 1) > 0 );
-                vs.Add( (n & 2) > 0 );
-                vs.Add( (n & 4) > 0 );
-                vs.Add( (n & 8) > 0 );
-                vs.Add( (n & 16) > 0 );
-                vs.Add( (n & 32) > 0 );
-                vs.Add( (n & 64) > 0 );
-                vs.Add( (n & 128) > 0 );
+                vs.Add( ( n & 1 ) > 0 );
+                vs.Add( ( n & 2 ) > 0 );
+                vs.Add( ( n & 4 ) > 0 );
+                vs.Add( ( n & 8 ) > 0 );
+                vs.Add( ( n & 16 ) > 0 );
+                vs.Add( ( n & 32 ) > 0 );
+                vs.Add( ( n & 64 ) > 0 );
+                vs.Add( ( n & 128 ) > 0 );
             }
             if( mod > 0 )
             {
                 var n = buf[ p + bytes ];
                 for( var i = 0; i < mod; ++i )
                 {
-                    vs.Add( (n & (1 << i)) > 0 );
+                    vs.Add( ( n & ( 1 << i ) ) > 0 );
                 }
             }
         }
@@ -620,7 +610,7 @@ namespace xxlib
             Read( ref vs, 0, 0 );
         }
 
-        public void Read<T>( ref List<List<T>> vs, int minLen = 0, int maxLen = 0 ) where T : struct, IBBReader
+        public void Read<T>( ref List<List<T>> vs, int minLen, int maxLen ) where T : struct, IBBReader
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -631,11 +621,12 @@ namespace xxlib
                 vs.Add( o );
             }
         }
+
         public void Read( ref List<List<string>> vs )
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<List<string>> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<List<string>> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -650,7 +641,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<List<bool>> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<List<bool>> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -669,23 +660,46 @@ namespace xxlib
 
         public void VarWrite( uint v )
         {
-            Reserve( dataLen + 5 );
-            BinaryHelper.WriteDirect732( buf, ref dataLen, v );
+            if( dataLen + 5 > buf.Length ) ReserveCore( dataLen + 5 );
+            Bit7Write32( buf, ref dataLen, v );
         }
         public void VarWrite( int v )
         {
-            Reserve( dataLen + 5 );
-            BinaryHelper.WriteDirect732( buf, ref dataLen, BinaryHelper.ZigZagEncode32( v ) );
+            if( dataLen + 5 > buf.Length ) ReserveCore( dataLen + 5 );
+            Bit7Write32( buf, ref dataLen, ZigZagEncode32( v ) );
         }
         public void VarWrite( ulong v )
         {
-            Reserve( dataLen + 9 );
-            BinaryHelper.WriteDirect764( buf, ref dataLen, v );
+            if( dataLen + 9 > buf.Length ) ReserveCore( dataLen + 9 );
+            Bit7Write64( buf, ref dataLen, v );
         }
         public void VarWrite( long v )
         {
-            Reserve( dataLen + 5 );
-            BinaryHelper.WriteDirect764( buf, ref dataLen, BinaryHelper.ZigZagEncode64( v ) );
+            if( dataLen + 9 > buf.Length ) ReserveCore( dataLen + 9 );
+            Bit7Write64( buf, ref dataLen, ZigZagEncode64( v ) );
+        }
+        public void VarWrite( double v )
+        {
+            if( dataLen + 9 > buf.Length ) ReserveCore( dataLen + 9 );
+            if( v == 0 )
+            {
+                buf[ dataLen++ ] = 0;
+            }
+            else
+            {
+                var intv = (int)v;
+                if( v == (double)intv )
+                {
+                    buf[ dataLen++ ] = 1;
+                    VarWrite( intv );
+                }
+                else
+                {
+                    buf[ dataLen++ ] = 2;
+                    Write( v );
+                }
+                // todo: inf? nan?
+            }
         }
 
         #endregion
@@ -694,82 +708,78 @@ namespace xxlib
 
         public void VarRead( ref uint v )
         {
-            BinaryHelper.Read732( ref v, buf, ref offset, dataLen );
+            Bit7Read32( ref v, buf, ref offset, dataLen );
         }
         public void VarRead( ref int v )
         {
             uint tmp = 0;
-            BinaryHelper.Read732( ref tmp, buf, ref offset, dataLen );
-            v = BinaryHelper.ZigZagDecode32( tmp );
+            Bit7Read32( ref tmp, buf, ref offset, dataLen );
+            v = ZigZagDecode32( tmp );
         }
         public void VarRead( ref ulong v )
         {
-            BinaryHelper.Read764( ref v, buf, ref offset, dataLen );
+            Bit7Read64( ref v, buf, ref offset, dataLen );
         }
         public void VarRead( ref long v )
         {
             ulong tmp = 0;
-            BinaryHelper.Read764( ref tmp, buf, ref offset, dataLen );
-            v = BinaryHelper.ZigZagDecode64( tmp );
+            Bit7Read64( ref tmp, buf, ref offset, dataLen );
+            v = ZigZagDecode64( tmp );
+        }
+        public void VarRead( ref double v )
+        {
+            switch( buf[ offset++ ] )
+            {
+            case 0:
+                v = 0;
+                break;
+            case 1:
+                int rtv = 0;
+                VarRead( ref rtv );
+                v = rtv;
+                break;
+            case 2:
+                Read( ref v );
+                break;
+            default:
+                throw new NotSupportedException();
+            }
         }
 
         #endregion
 
-        #region var read write length funcs
+        #region binary helper funcs
 
-        public void WriteLength( int v )
-        {
-            Reserve( dataLen + 5 );
-            BinaryHelper.WriteDirect732( buf, ref dataLen, (uint)v );
-        }
-
-        public int ReadLength()
-        {
-            uint len = 0;
-            BinaryHelper.Read732( ref len, buf, ref offset, dataLen );
-            return (int)len;
-        }
-        public int ReadLength( int minLen, int maxLen )
-        {
-            uint len = 0;
-            BinaryHelper.Read732( ref len, buf, ref offset, dataLen );
-            if( len < minLen || (maxLen > 0 && len > maxLen) ) throw new Exception( "len out of range" );
-            return (int)len;
-        }
-
-        #endregion
-    }
-
-    public static class BinaryHelper
-    {
         /// <summary>
         /// 统计有多少个 1
         /// </summary>
-        public static int Popcnt( uint x )
+        protected static int Popcnt( uint x )
         {
-            x -= ((x >> 1) & 0x55555555);
-            x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
-            x = (((x >> 4) + x) & 0x0f0f0f0f);
-            x += (x >> 8);
-            x += (x >> 16);
-            return (int)(x & 0x0000003f);
+            x -= ( ( x >> 1 ) & 0x55555555 );
+            x = ( ( ( x >> 2 ) & 0x33333333 ) + ( x & 0x33333333 ) );
+            x = ( ( ( x >> 4 ) + x ) & 0x0f0f0f0f );
+            x += ( x >> 8 );
+            x += ( x >> 16 );
+            return (int)( x & 0x0000003f );
         }
+
         /// <summary>
         /// 统计高位有多少个 0
         /// </summary>
-        public static int Clz( uint x )
+        protected static int Clz( uint x )
         {
-            x |= (x >> 1);
-            x |= (x >> 2);
-            x |= (x >> 4);
-            x |= (x >> 8);
-            x |= (x >> 16);
-            return (int)(32 - Popcnt( x ));
+            x |= ( x >> 1 );
+            x |= ( x >> 2 );
+            x |= ( x >> 4 );
+            x |= ( x >> 8 );
+            x |= ( x >> 16 );
+            return (int)( 32 - Popcnt( x ) );
         }
+
         /// <summary>
         /// 求大于 v 的 2^n 值
         /// </summary>
-        public static uint Round2n( uint v )
+        protected static uint Round2n( uint v )
         {
             int bits = 31 - Clz( v );
             var rtv = (uint)( 1u << bits );
@@ -779,37 +789,43 @@ namespace xxlib
 
         // 负转正：利用单数来存负数，双数来存正数
         // 等效代码： if( v < 0 ) return -v * 2 - 1; else return v * 2;
-        public static ushort ZigZagEncode16( short v ) { return (ushort)((v << 1) ^ (v >> 15)); }
-        public static uint ZigZagEncode32( int v ) { return (uint)((v << 1) ^ (v >> 31)); }
-        public static ulong ZigZagEncode64( long v ) { return (ulong)((v << 1) ^ (v >> 63)); }
+        protected static ushort ZigZagEncode16( short v ) { return (ushort)( ( v << 1 ) ^ ( v >> 15 ) ); }
+
+        protected static uint ZigZagEncode32( int v ) { return (uint)( ( v << 1 ) ^ ( v >> 31 ) ); }
+
+        protected static ulong ZigZagEncode64( long v ) { return (ulong)( ( v << 1 ) ^ ( v >> 63 ) ); }
+
         // 等效代码： if( (v & 1) > 0 ) return -(v + 1) / 2; else return v / 2;
-        public static short ZigZagDecode16( ushort v ) { return (short)((short)(v >> 1) ^ (-(short)(v & 1))); }
-        public static int ZigZagDecode32( uint v ) { return (int)(v >> 1) ^ (-(int)(v & 1)); }
-        public static long ZigZagDecode64( ulong v ) { return (long)(v >> 1) ^ (-(long)(v & 1)); }
+        protected static short ZigZagDecode16( ushort v ) { return (short)( (short)( v >> 1 ) ^ ( -(short)( v & 1 ) ) ); }
+
+        protected static int ZigZagDecode32( uint v ) { return (int)( v >> 1 ) ^ ( -(int)( v & 1 ) ); }
+
+        protected static long ZigZagDecode64( ulong v ) { return (long)( v >> 1 ) ^ ( -(long)( v & 1 ) ); }
 
         // need ensure 5
-        public static void WriteDirect732( byte[] buf, ref int offset, uint v )
+        protected static void Bit7Write32( byte[] buf, ref int offset, uint v )
         {
-            Lab1:
+Lab1:
             byte b7 = (byte)v;
             v >>= 7;
             if( v > 0 )
             {
-                buf[ offset++ ] = (byte)(b7 | (byte)0x80);
+                buf[ offset++ ] = (byte)( b7 | (byte)0x80 );
                 goto Lab1;
             }
             buf[ offset++ ] = b7;
         }
+
         // need ensure 9
-        public static void WriteDirect764( byte[] buf, ref int offset, ulong v )
+        protected static void Bit7Write64( byte[] buf, ref int offset, ulong v )
         {
             var idx8 = offset + 8;
-            Lab1:
+Lab1:
             byte b7 = (byte)v;
             v >>= 7;
             if( v > 0 )
             {
-                buf[ offset++ ] = (byte)(b7 | (byte)0x80);
+                buf[ offset++ ] = (byte)( b7 | (byte)0x80 );
                 if( offset == idx8 )
                     buf[ offset++ ] = (byte)v;
                 else
@@ -822,52 +838,49 @@ namespace xxlib
         }
 
 
-        public static void Read764( ref ulong v, byte[] buf, ref int offset, int dataLen )
+        protected static void Bit7Read64( ref ulong v, byte[] buf, ref int offset, int dataLen )
         {
-            if( offset >= dataLen ) throw new Exception( "not enough data" );
             var idx8 = offset + 8;
             v = 0;
             int lshift = 0;
-            Lab1:
+Lab1:
             ulong b7 = buf[ offset++ ];
             if( b7 > 0x7F )
             {
-                if( offset >= dataLen ) throw new Exception( "not enough data" );
                 if( offset < idx8 )
                 {
-                    v |= (b7 & 0x7F) << lshift;
+                    v |= ( b7 & 0x7F ) << lshift;
                     lshift += 7;
                     goto Lab1;
                 }
-                else v |= (b7 << lshift) | ((ulong)buf[ offset++ ] << 28 << 28);
+                else v |= ( b7 << lshift ) | ( (ulong)buf[ offset++ ] << 28 << 28 );
             }
             else v |= b7 << lshift;
         }
-        public static void Read732( ref uint v, byte[] buf, ref int offset, int dataLen )
+
+        protected static void Bit7Read32( ref uint v, byte[] buf, ref int offset, int dataLen )
         {
-            if( offset >= dataLen ) throw new Exception( "not enough data" );
             var idx5 = offset + 5;
             int lshift = 0;
             v = 0;
-            Lab1:
+Lab1:
             uint b7 = buf[ offset++ ];
             if( b7 > 0x7F )
             {
-                if( offset == idx5 ) throw new Exception( "overflow" );
-                if( offset >= dataLen ) throw new Exception( "not enough data" );
-                v |= (b7 & 0x7F) << lshift;
+                if( offset == idx5 ) throw new OverflowException();
+                v |= ( b7 & 0x7F ) << lshift;
                 lshift += 7;
                 goto Lab1;
             }
             else
             {
-                if( offset == idx5 && b7 > 15 ) throw new Exception( "overflow" );
+                if( offset == idx5 && b7 > 15 ) throw new OverflowException();
                 else v |= b7 << lshift;
             }
         }
 
 
-        private static void DumpAscII( ref StringBuilder s, byte[] buf, int offset, int len )
+        protected static void DumpAscII( ref StringBuilder s, byte[] buf, int offset, int len )
         {
             for( int i = offset; i < offset + len; ++i )
             {
@@ -878,7 +891,7 @@ namespace xxlib
         }
 
         // write buf's binary dump text to s
-        public static void Dump( ref StringBuilder s, byte[] buf, int len = 0 )
+        protected static void Dump( ref StringBuilder s, byte[] buf, int len = 0 )
         {
             if( buf == null || buf.Length == 0 ) return;
             if( len == 0 ) len = buf.Length;
@@ -887,7 +900,7 @@ namespace xxlib
             int i = 0;
             for( ; i < len; ++i )
             {
-                if( (i % 16) == 0 )
+                if( ( i % 16 ) == 0 )
                 {
                     if( i > 0 )
                     {           // output ascii to the end of the line
@@ -898,7 +911,7 @@ namespace xxlib
                     s.Append( i.ToString( "x8" ) );
                     s.Append( "  " );
                 }
-                else if( (i > 0 && (i % 4 == 0)) )
+                else if( ( i > 0 && ( i % 4 == 0 ) ) )
                 {
                     s.Append( "  " );
                 }
@@ -915,7 +928,7 @@ namespace xxlib
                 len = len + 16 - left;
                 for( ; i < len; ++i )
                 {
-                    if( i > 0 && (i % 4 == 0) )
+                    if( i > 0 && ( i % 4 == 0 ) )
                         s.Append( "  " );
                     else s.Append( ' ' );
                     s.Append( "  " );
@@ -926,11 +939,50 @@ namespace xxlib
             s.Append( '\n' );
         }
 
-        public static string Dump( byte[] buf, int len = 0 )
+        protected static string Dump( byte[] buf, int len = 0 )
         {
             var sb = new StringBuilder();
             Dump( ref sb, buf, len );
             return sb.ToString();
         }
+
+        #endregion
+
+        #region protected funcs
+
+        protected void ReserveCore( int capacity )
+        {
+            Array.Resize<byte>( ref buf, (int)Round2n( (uint)( capacity * 2 ) ) );
+        }
+
+        protected int ReadLength( int minLen, int maxLen )
+        {
+            uint len = 0;
+            Bit7Read32( ref len, buf, ref offset, dataLen );
+            if( len < minLen || ( maxLen > 0 && len > maxLen ) ) throw new OverflowException();
+            return (int)len;
+        }
+
+        protected void WriteLength( int v )
+        {
+            VarWrite( (uint)v );
+        }
+
+        #endregion
     }
+
+    #region interface
+
+    public interface IBBReader
+    {
+        void ReadFrom( ByteBuffer tb );
+    }
+
+    public interface IBBWriter
+    {
+        void WriteTo( ByteBuffer tb );
+    }
+
+    #endregion
+
 }

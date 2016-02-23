@@ -13,29 +13,29 @@ namespace vs_cs
         class Fooo { }
         static void Main( string[] args )
         {
-            var m = new Dictionary<float, string>();
-            var sw = Stopwatch.StartNew();
-            for( int i = 0; i < 9999999; ++i )
-            {
-                m.Add( i, "this is a string!!!!!!!!!!!! " + i.ToString() );
-            }
-            Console.WriteLine( sw.ElapsedMilliseconds );
-            sw.Restart();
-            Int64 counter = 0;
-            for( int i = 0; i < 9999999; ++i )
-            {
-                if( m.ContainsKey( i ) ) counter += i;
-                //counter += m[ i ];
-            }
-            Console.WriteLine( sw.ElapsedMilliseconds );
-            sw.Restart();
-            for( int i = 0; i < 9999999; ++i )
-            {
-                m.Remove( i );
-            }
-            Console.WriteLine( sw.ElapsedMilliseconds );
-            Console.Write( counter );
-            return;
+            //var m = new Dictionary<float, string>();
+            //var sw = Stopwatch.StartNew();
+            //for( int i = 0; i < 9999999; ++i )
+            //{
+            //    m.Add( i, "this is a string!!!!!!!!!!!! " + i.ToString() );
+            //}
+            //Console.WriteLine( sw.ElapsedMilliseconds );
+            //sw.Restart();
+            //Int64 counter = 0;
+            //for( int i = 0; i < 9999999; ++i )
+            //{
+            //    if( m.ContainsKey( i ) ) counter += i;
+            //    //counter += m[ i ];
+            //}
+            //Console.WriteLine( sw.ElapsedMilliseconds );
+            //sw.Restart();
+            //for( int i = 0; i < 9999999; ++i )
+            //{
+            //    m.Remove( i );
+            //}
+            //Console.WriteLine( sw.ElapsedMilliseconds );
+            //Console.Write( counter );
+            //return;
 
             var bb = new ByteBuffer();
             var s = Stopwatch.StartNew();

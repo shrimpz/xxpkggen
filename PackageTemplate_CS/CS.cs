@@ -3,7 +3,7 @@ using PackageLibrary;
 using System;
 
 [Desc( "RootEnum1's desc" )]
-enum Enum1
+enum Enum1 : byte
 {
     [Desc( "RootEnum1 Item1's desc" )]
     Item1 = 0,

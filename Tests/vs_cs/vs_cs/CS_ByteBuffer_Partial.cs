@@ -8,13 +8,13 @@ namespace xxlib
     {
         public void Write( global::CS.Enum1 v )
         {
-            Write( (int)v );
+            Write( (byte)v );
         }
         public void Write( global::CS.Enum1[] vs )
         {
             for( int i = 0; i < vs.Length; i++ )
             {
-                Write( (int)vs[ i ] );
+                Write( (byte)vs[ i ] );
             }
         }
         public void Write( List<global::CS.Enum1> vs )
@@ -22,18 +22,18 @@ namespace xxlib
             WriteLength( vs.Count );
             foreach( var v in vs )
             {
-                Write( (int)v );
+                Write( (byte)v );
             }
         }
         public void Read( ref global::CS.Enum1 v )
         {
-            int tmp = 0;
+            byte tmp = 0;
             Read( ref tmp );
             v = (global::CS.Enum1)tmp;
         }
         public void Read( ref global::CS.Enum1[] vs )
         {
-            int tmp = 0;
+            byte tmp = 0;
             for( int i = 0; i < vs.Length; i++ )
             {
                 Read( ref tmp );
@@ -50,7 +50,7 @@ namespace xxlib
             vs.Clear();
             for( int i = 0; i < len; i++ )
             {
-                int tmp = 0;
+                byte tmp = 0;
                 Read( ref tmp );
                 vs.Add( (global::CS.Enum1)tmp );
             }
@@ -157,4 +157,4 @@ namespace xxlib
         }
 
     }
-} // ByteBuffer
+}

@@ -6,7 +6,7 @@ namespace CS
 /// <summary>
 /// RootEnum1's desc
 /// </summary>
-public enum Enum1 : int
+public enum Enum1 : byte
 {
     /// <summary>
     /// RootEnum1 Item1's desc

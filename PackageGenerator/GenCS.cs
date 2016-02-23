@@ -315,7 +315,7 @@ using " + pn + @";
 
 public static class PackageHandler
 {
-    bool Handle( ByteBuffer bb )
+    public static bool Handle( ByteBuffer bb )
     {
         short pkgId = 0;
         try

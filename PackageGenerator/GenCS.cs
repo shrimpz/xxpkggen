@@ -80,7 +80,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<" + GetNamespace( e ) + "." + e.Name + @"> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<" + GetNamespace( e ) + "." + e.Name + @"> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();

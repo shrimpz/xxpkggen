@@ -75,8 +75,9 @@ namespace PackageGenerator
                     return;
                 }
 
-                Process.Start( "explorer.exe", outputDirPath );
             }
+
+            Process.Start( "explorer.exe", outputDirPath );
         }
 
 

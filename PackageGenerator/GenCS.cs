@@ -17,13 +17,13 @@ namespace PackageGenerator
         {
             _pn = pn;
 
+            // 分类预处理
             var enums = t.Structs.Where( a => a.IsEnum ).ToList();
             var packages = t.Structs.Where( a => a.IsPackage ).ToList();
             var packages_and_structs = t.Structs.Where( a => a.IsPackage || a.IsStruct ).ToList();
 
 
-
-            #region 生成 pn_ByteBufferExt.cs
+            #region 生成 pn_ByteBuffer_Partial.cs
 
             // 文件头部
             var sb = new StringBuilder();
@@ -95,12 +95,12 @@ namespace xxlib
             }
             sb.Append( @"
     }
-} // ByteBuffer
+}
 " );
 
             try
             {
-                sb.WriteToFile( Path.Combine( outDir, pn + "_ByteBufferExt.cs" ) );
+                sb.WriteToFile( Path.Combine( outDir, pn + "_ByteBuffer_Partial.cs" ) );
             }
             catch( Exception ex )
             {
@@ -223,8 +223,7 @@ partial class " + c.Name + @"
             #endregion
 
 
-
-            #region 生成 pn_IBBReaderWriter.cs
+            #region 生成 pn_Partial.cs
 
             // 文件头部
             sb.Clear();
@@ -260,7 +259,7 @@ public partial class " + c.Name + @" : IBBReader, IBBWriter
                 foreach( var f in c.Members )
                 {
                     sb.Append( @"
-        bb." + (f.NoCompress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Write( " + f.Name + " );" );
+        bb." + ( f.NoCompress ? "" : ( f.Type.Compressable() ? "Var" : "" ) ) + "Write( " + f.Name + " );" );
                 }
                 sb.Append( @" 
     }
@@ -270,7 +269,7 @@ public partial class " + c.Name + @" : IBBReader, IBBWriter
                 foreach( var f in c.Members )
                 {
                     sb.Append( @"
-        bb." + (f.NoCompress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Read( ref " + f.Name );
+        bb." + ( f.NoCompress ? "" : ( f.Type.Compressable() ? "Var" : "" ) ) + "Read( ref " + f.Name );
                     if( f.Type.IsContainer && !f.Type.IsArray )
                     {
                         sb.Append( @", " + f.MinLen + ", " + f.MaxLen );
@@ -297,7 +296,7 @@ public partial class " + c.Name + @" : IBBReader, IBBWriter
 
             try
             {
-                sb.WriteToFile( Path.Combine( outDir, pn + "_IBBReaderWriter.cs" ) );
+                sb.WriteToFile( Path.Combine( outDir, pn + "_Partial.cs" ) );
             }
             catch( Exception ex )
             {
@@ -312,48 +311,51 @@ public partial class " + c.Name + @" : IBBReader, IBBWriter
 using System;
 using System.Collections.Generic;
 using xxlib;
-using " + pn + @"
+using " + pn + @";
 
-bool PackageHandle( ByteBuffer bb )
+public static class PackageHandler
 {
-    short pkgId = 0;
-    try
+    bool Handle( ByteBuffer bb )
     {
-        bb.Read( ref pkgId );
-    }
-    catch 
-    {
-        return false;
-    }
+        short pkgId = 0;
+        try
+        {
+            bb.Read( ref pkgId );
+        }
+        catch 
+        {
+            return false;
+        }
 
-    // custom pkgId handler code here
+        // custom pkgId handler code here
 
-    switch( pkgId )
-    {" );
+        switch( pkgId )
+        {" );
             foreach( var c in packages )
             {
                 sb.Append( @"
-        case " + GetNamespace( c ) + "." + c.Name + @".packageId :
-        {
-            var o = new " + GetNamespace( c ) + "." + c.Name + @"();
-            try
+            case " + GetNamespace( c ) + "." + c.Name + @".packageId :
             {
-                o =  bb.Read( ref " + GetNamespace( c ) + "." + c.Name + @" );
-            }
-            catch
-            {
-                return false;
-            }
+                var o = new " + GetNamespace( c ) + "." + c.Name + @"();
+                try
+                {
+                    bb.Read( ref o );
+                }
+                catch
+                {
+                    return false;
+                }
 
-            // code here
+                // code here
 
-            return true;
-        }" );
+                return true;
+            }" );
             }
 
             sb.Append( @"
-        default:
-            return false;
+            default:
+                return false;
+        }
     }
 }
 " );
@@ -368,109 +370,33 @@ bool PackageHandle( ByteBuffer bb )
 
             #endregion
 
-            #region 生成 _cs_log.txt
-            sb.Clear();
-            sb.Append( @"
-var sb = new StringBuilder();
-short pkgId = bb.ReadShort();
-switch( pkgId )
-{" );
-            foreach( var c in packages )
-            {
-                sb.Append( @"
-    case " + pn + "." + c.Name + @".packageId:
-        {
-            " + pn + "." + c.Name + @" o = null;
-            try
-            {
-                o =  bb.Read<" + pn + "." + c.Name + @">();
-            }
-            catch
-            {
-                Console.Write( ""ByteBuff Error"" );
-            }
-            // code here
-            string endString = JsonConvert.SerializeObject( o );" );
-                if( pn == "CS" )
-                {
-                    sb.Append( @"
-            sb.Append( ""客服端发送类型为:"" );" );
-                }
-                else if( pn == "SC" )
-                {
-                    sb.Append( @"
-            sb.Append( ""服务器发送类型为:"" );" );
-                }
 
-                sb.Append( @"
-            sb.Append( """ + c.Name + @"\n"" );" );
-                if( pn == "CS" )
-                {
-                    sb.Append( @"
-            sb.Append( ""客服端返回数据为:"" );" );
-                }
-                else if( pn == "SC" )
-                {
-                    sb.Append( @"
-            sb.Append( ""服务器返回数据为:"" );" );
-                }
-                sb.Append( @"
-            sb.Append( endString );" );
-                sb.Append( @"
-            sb.Append( ""(  " + c.Desc + @"  )"" );" );
-                sb.Append( @"
-            sb.Append( ""\n"" );
-            break;
-         
-        }" );
-            }
-
-            sb.Append( @"
-    default:
-            sb.Append( ""no packageId ""+ pkgId );
-        break;
-}
- bb.offset = 0;
- DateTime dt = DateTime.Now;" );
-            sb.Append( @"
- sb.Append(""时间: """ + @"+dt.ToString()+" + @"""\n"");
-" );
-
-            sb.Append( @" File.AppendAllText( filePath, sb.ToString(), Encoding.UTF8 );
-" );
-            try
-            {
-                sb.WriteToFile( Path.Combine( outDir, pn + "_cs_log.txt" ) );
-            }
-            catch( Exception ex )
-            {
-                return ex.Message;
-            }
-
-            #endregion
-
-            #region 生成 pn_WritePackage.cs
+            #region 生成 pn_ByteBuffer_Ext.cs
 
             sb.Clear();
-            sb.Append( @"
-public static class ByteBufferExt
-{" );
+            sb.Append( @"namespace xxlib
+{
+
+    public static class ByteBuffer_Ext
+    {" );
             foreach( var c in packages )
             {
                 var tn = GetNamespace( c ) + "." + c.Name;
                 sb.Append( @"
-    public static void WritePackage( this ByteBuffer bb, " + tn + @" v )
-    {
-        bb.Write( " + tn + @".packageId );
-        bb.Write( v );
-    } " );
+        public static void WritePackage( this ByteBuffer bb, " + tn + @" v )
+        {
+            bb.Write( " + tn + @".packageId );
+            bb.Write( v );
+        } " );
 
             }
             sb.Append( @"
-}" );
+    }
+}
+" );
             try
             {
-                sb.WriteToFile( Path.Combine( outDir, pn + "_WritePackage.cs" ) );
+                sb.WriteToFile( Path.Combine( outDir, pn + "_ByteBuffer_Ext.cs" ) );
             }
             catch( Exception ex )
             {
@@ -518,26 +444,26 @@ sps + @"/// <summary>
             {
                 switch( d.Name )
                 {
-                    case "Byte":
-                    case "UInt8":
-                    case "UInt16":
-                    case "UInt32":
-                    case "UInt64":
-                    case "SByte":
-                    case "Int8":
-                    case "Int16":
-                    case "Int32":
-                    case "Int64":
-                    case "Double":
-                    case "Float":
-                    case "Single": return "0";
-                    case "Boolean":
-                    case "Bool": return "false";
-                    case "String": return "\"\"";
-                    case "DateTime": return "new DateTime( 1991, 1, 1, 0, 0, 0 )"; //"DateTime.MinValue";
-                    case "ByteBuffer": return "new ByteBuffer()";
-                    default:
-                        throw new Exception( "unhandled data type" );
+                case "Byte":
+                case "UInt8":
+                case "UInt16":
+                case "UInt32":
+                case "UInt64":
+                case "SByte":
+                case "Int8":
+                case "Int16":
+                case "Int32":
+                case "Int64":
+                case "Double":
+                case "Float":
+                case "Single": return "0";
+                case "Boolean":
+                case "Bool": return "false";
+                case "String": return "\"\"";
+                case "DateTime": return "new DateTime( 1991, 1, 1, 0, 0, 0 )"; //"DateTime.MinValue";
+                case "ByteBuffer": return "new ByteBuffer()";
+                default:
+                    throw new Exception( "unhandled data type" );
                 }
             }
             else    // custom / enum
@@ -583,26 +509,26 @@ sps + @"/// <summary>
             {
                 switch( d.Name )
                 {
-                    case "Byte": return "byte";
-                    case "UInt8": return "byte";
-                    case "UInt16": return "ushort";
-                    case "UInt32": return "uint";
-                    case "UInt64": return "ulong";
-                    case "SByte": return "sbyte";
-                    case "Int8": return "sbyte";
-                    case "Int16": return "short";
-                    case "Int32": return "int";
-                    case "Int64": return "long";
-                    case "Double": return "double";
-                    case "Float": return "float";
-                    case "Single": return "float";
-                    case "Boolean": return "bool";
-                    case "Bool": return "bool";
-                    case "String": return "string";
-                    case "DateTime": return "DateTime";
-                    case "ByteBuffer": return "ByteBuffer";
-                    default:
-                        throw new Exception( "unhandled data type" );
+                case "Byte": return "byte";
+                case "UInt8": return "byte";
+                case "UInt16": return "ushort";
+                case "UInt32": return "uint";
+                case "UInt64": return "ulong";
+                case "SByte": return "sbyte";
+                case "Int8": return "sbyte";
+                case "Int16": return "short";
+                case "Int32": return "int";
+                case "Int64": return "long";
+                case "Double": return "double";
+                case "Float": return "float";
+                case "Single": return "float";
+                case "Boolean": return "bool";
+                case "Bool": return "bool";
+                case "String": return "string";
+                case "DateTime": return "DateTime";
+                case "ByteBuffer": return "ByteBuffer";
+                default:
+                    throw new Exception( "unhandled data type" );
                 }
 
             }
@@ -624,14 +550,14 @@ sps + @"/// <summary>
         {
             switch( e.EnumUnderlyingType )
             {
-                case "Byte": return "byte";
-                case "SByte": return "sbyte";
-                case "UInt16": return "ushort";
-                case "Int16": return "short";
-                case "UInt32": return "uint";
-                case "Int32": return "int";
-                case "UInt64": return "ulong";
-                case "Int64": return "long";
+            case "Byte": return "byte";
+            case "SByte": return "sbyte";
+            case "UInt16": return "ushort";
+            case "Int16": return "short";
+            case "UInt32": return "uint";
+            case "Int32": return "int";
+            case "UInt64": return "ulong";
+            case "Int64": return "long";
             }
             throw new Exception( "unsupported data type" );
         }
@@ -648,19 +574,19 @@ sps + @"/// <summary>
                 switch( d.Name )
                 {
 
-                    case "Byte": rtv = "ReadByte"; break;
-                    case "Int16": rtv = "ReadShort"; break;
-                    case "Int32": rtv = "ReadInt"; break;
-                    case "Int64": rtv = "ReadLong"; break;
-                    case "Char": rtv = "ReadChar"; break;
-                    case "Double": rtv = "ReadDouble"; break;
-                    case "Single": rtv = "ReadFloat"; break;
-                    case "Boolean": rtv = "ReadBoolean"; break;
-                    case "DateTime": rtv = "ReadDate"; break;
-                    case "String": rtv = "ReadString"; break;
-                    default:
-                        rtv = (d.Namespace != "" ? (d.Namespace + ".") : "") + d.Name;
-                        break;
+                case "Byte": rtv = "ReadByte"; break;
+                case "Int16": rtv = "ReadShort"; break;
+                case "Int32": rtv = "ReadInt"; break;
+                case "Int64": rtv = "ReadLong"; break;
+                case "Char": rtv = "ReadChar"; break;
+                case "Double": rtv = "ReadDouble"; break;
+                case "Single": rtv = "ReadFloat"; break;
+                case "Boolean": rtv = "ReadBoolean"; break;
+                case "DateTime": rtv = "ReadDate"; break;
+                case "String": rtv = "ReadString"; break;
+                default:
+                    rtv = ( d.Namespace != "" ? ( d.Namespace + "." ) : "" ) + d.Name;
+                    break;
                 }
 
             }
@@ -688,17 +614,17 @@ sps + @"/// <summary>
                 {
                     switch( GetByteBufferReadFuncName( d.ChildType ) )
                     {
-                        case "ReadByte": rtv = "ReadListByte"; break;
-                        case "ReadShort": rtv = "ReadListShort"; break;
-                        case "ReadInt": rtv = "ReadListInt"; break;
-                        case "ReadLong": rtv = "ReadListLong"; break;
-                        case "ReadChar": rtv = "ReadListChar"; break;
-                        case "ReadDouble": rtv = "ReadListDouble"; break;
-                        case "ReadFloat": rtv = "ReadListFloat"; break;
-                        case "ReadBoolean": rtv = "ReadListBool"; break;
-                        case "ReadDate": rtv = "ReadListDate"; break;
-                        case "ReadString": rtv = "ReadListString"; break;
-                        case "Read": rtv = "ReadListObject"; break;
+                    case "ReadByte": rtv = "ReadListByte"; break;
+                    case "ReadShort": rtv = "ReadListShort"; break;
+                    case "ReadInt": rtv = "ReadListInt"; break;
+                    case "ReadLong": rtv = "ReadListLong"; break;
+                    case "ReadChar": rtv = "ReadListChar"; break;
+                    case "ReadDouble": rtv = "ReadListDouble"; break;
+                    case "ReadFloat": rtv = "ReadListFloat"; break;
+                    case "ReadBoolean": rtv = "ReadListBool"; break;
+                    case "ReadDate": rtv = "ReadListDate"; break;
+                    case "ReadString": rtv = "ReadListString"; break;
+                    case "Read": rtv = "ReadListObject"; break;
                     }
                 }
             }
@@ -707,6 +633,8 @@ sps + @"/// <summary>
 
         #endregion
 
+
+        #region GetNamespace
 
         public static string GetNamespace( DataType e )
         {
@@ -731,6 +659,7 @@ sps + @"/// <summary>
             }
         }
 
+        #endregion
 
     }
 }

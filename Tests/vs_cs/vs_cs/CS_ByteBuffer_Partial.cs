@@ -44,7 +44,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<global::CS.Enum1> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<global::CS.Enum1> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -94,7 +94,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<global::CS.Ns2.Enum1> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<global::CS.Ns2.Enum1> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -144,7 +144,7 @@ namespace xxlib
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read( ref List<global::CS.Ns1.Enum1> vs, int minLen = 0, int maxLen = 0 )
+        public void Read( ref List<global::CS.Ns1.Enum1> vs, int minLen, int maxLen )
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();

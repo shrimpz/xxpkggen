@@ -4,16 +4,18 @@ using System.Text;
 
 namespace xxlib
 {
-    // todo: 为 double 增加 var 版本
-
     /// <summary>
-    /// 读写分作两种：定长( memcpy ), 变长( 7bit ), 视需求选用( 模板里面可以用相应的 Attribute 设置具体的 field 使用变长存储 )。
-    /// 可变长类型：int, long, double
-    /// 长度必然以变长存储
-    /// 为简化，不支持“空”，“指针”的概念（ Write 时传入 null 是不被支持的, 要自己判断 )
     /// interface 在本代码文件的尾部
+    /// 为简化，不支持“空”，“指针”的概念（ Write 时传入 null 是不被支持的, 要自己判断 )
     /// 基本上这个类和 xxlib.ByteBuffer 的设计，实现原理，使用方式几乎一样
     /// 区别在于， c# 版 Read 需要 靠 try catch 来捕获错误( 长度超 Limit 也是 OverflowException )
+    /// 读写分作两种：定长( memcpy ), 变长( 7bit ), 视需求选用( 模板里面可以用相应的 Attribute 设置具体的 field 使用变长存储 )。
+    /// 可变长类型：int, long, double
+    /// 支持关键字级别基础数据类型及其数组( 算定长，不会记录长度 ),
+    /// 支持 DateTime, string( 会记录长度 ), ByteBuffer( 会记录长度 ), List( 会记录长度 )
+    /// 支持 bool 数组或 List 的位压缩存储
+    /// 支持 List 最多嵌套 2 层
+    /// 支持 非数组容器还原时限长
     /// </summary>
     public partial class ByteBuffer
     {
@@ -673,8 +675,31 @@ namespace xxlib
         }
         public void VarWrite( long v )
         {
-            if( dataLen + 5 > buf.Length ) ReserveCore( dataLen + 5 );
+            if( dataLen + 9 > buf.Length ) ReserveCore( dataLen + 9 );
             Bit7Write64( buf, ref dataLen, ZigZagEncode64( v ) );
+        }
+        public void VarWrite( double v )
+        {
+            if( dataLen + 9 > buf.Length ) ReserveCore( dataLen + 9 );
+            if( v == 0 )
+            {
+                buf[ dataLen++ ] = 0;
+            }
+            else
+            {
+                var intv = (int)v;
+                if( v == (double)intv )
+                {
+                    buf[ dataLen++ ] = 1;
+                    VarWrite( intv );
+                }
+                else
+                {
+                    buf[ dataLen++ ] = 2;
+                    Write( v );
+                }
+                // todo: inf? nan?
+            }
         }
 
         #endregion
@@ -700,6 +725,25 @@ namespace xxlib
             ulong tmp = 0;
             Bit7Read64( ref tmp, buf, ref offset, dataLen );
             v = ZigZagDecode64( tmp );
+        }
+        public void VarRead( ref double v )
+        {
+            switch( buf[ offset++ ] )
+            {
+            case 0:
+                v = 0;
+                break;
+            case 1:
+                int rtv = 0;
+                VarRead( ref rtv );
+                v = rtv;
+                break;
+            case 2:
+                Read( ref v );
+                break;
+            default:
+                throw new NotSupportedException();
+            }
         }
 
         #endregion

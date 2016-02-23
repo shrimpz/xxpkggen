@@ -4,15 +4,16 @@ using System.Text;
 
 namespace xxlib
 {
-    // todo: 去掉 read write length 系列，为  int32 64 增加   limit 功能, 为 double 增加 var 版本
+    // todo: 为 double 增加 var 版本
 
     /// <summary>
     /// 读写分作两种：定长( memcpy ), 变长( 7bit ), 视需求选用( 模板里面可以用相应的 Attribute 设置具体的 field 使用变长存储 )。
     /// 可变长类型：int, long, double
     /// 长度必然以变长存储
-    /// 为简化，没有“空”，“指针”的概念。
+    /// 为简化，不支持“空”，“指针”的概念（ Write 时传入 null 是不被支持的, 要自己判断 )
     /// interface 在本代码文件的尾部
-    /// 基本上这个类和 xxlib.ByteBuffer 的设计，实现原理，使用方式几乎一样, 区别在于， c# 版 Read 需要 靠 try catch 来捕获错误.
+    /// 基本上这个类和 xxlib.ByteBuffer 的设计，实现原理，使用方式几乎一样
+    /// 区别在于， c# 版 Read 需要 靠 try catch 来捕获错误( 长度超 Limit 也是 OverflowException )
     /// </summary>
     public partial class ByteBuffer
     {
@@ -243,7 +244,6 @@ namespace xxlib
         }
         public void Write( byte[] v )
         {
-            if( v == null ) throw new BBNullValueException();
             var vlen = v.Length;
             if( dataLen + vlen > buf.Length ) ReserveCore( dataLen + vlen );
             Reserve( dataLen + vlen );
@@ -252,7 +252,6 @@ namespace xxlib
         }
         public void Write( byte[] v, int offset, int len )
         {
-            if( v == null ) throw new BBNullValueException();
             if( dataLen + len > buf.Length ) ReserveCore( dataLen + len );
             Array.Copy( v, offset, buf, dataLen, len );
             dataLen += len;
@@ -463,8 +462,6 @@ namespace xxlib
         }
         public void Read( ref DateTime v )
         {
-            if( offset + 8 > dataLen )
-                throw new BBOutOfBufRangeException();
             short years = 0;
             Read( ref years );
             v = new DateTime( years,
@@ -504,7 +501,6 @@ namespace xxlib
         public void Read( ref bool[] vs )
         {
             var bytes = ( vs.Length + 7 ) >> 3;
-            if( dataLen < offset + bytes ) throw new BBOutOfBufRangeException();
             var p = offset;
             offset += bytes;
             var mod = vs.Length % 8;
@@ -580,7 +576,6 @@ namespace xxlib
             if( len == 0 ) return;
 
             var bytes = ( len + 7 ) >> 3;
-            if( dataLen < offset + bytes ) throw new BBOutOfBufRangeException();
             var p = offset;
             offset += bytes;
             var mod = len % 8;
@@ -624,6 +619,7 @@ namespace xxlib
                 vs.Add( o );
             }
         }
+
         public void Read( ref List<List<string>> vs )
         {
             Read( ref vs, 0, 0 );
@@ -704,30 +700,6 @@ namespace xxlib
             ulong tmp = 0;
             Bit7Read64( ref tmp, buf, ref offset, dataLen );
             v = ZigZagDecode64( tmp );
-        }
-
-        #endregion
-
-        #region var read write length funcs( support len limit )
-
-        public void WriteLength( int v )
-        {
-            if( dataLen + 5 > buf.Length ) ReserveCore( dataLen + 5 );
-            Bit7Write32( buf, ref dataLen, (uint)v );
-        }
-
-        public int ReadLength()
-        {
-            uint len = 0;
-            Bit7Read32( ref len, buf, ref offset, dataLen );
-            return (int)len;
-        }
-        public int ReadLength( int minLen, int maxLen )
-        {
-            uint len = 0;
-            Bit7Read32( ref len, buf, ref offset, dataLen );
-            if( len < minLen || ( maxLen > 0 && len > maxLen ) ) throw new BB_OutOfLimitException();
-            return (int)len;
         }
 
         #endregion
@@ -824,7 +796,6 @@ Lab1:
 
         protected static void Bit7Read64( ref ulong v, byte[] buf, ref int offset, int dataLen )
         {
-            if( offset >= dataLen ) throw new BBOutOfBufRangeException();
             var idx8 = offset + 8;
             v = 0;
             int lshift = 0;
@@ -832,7 +803,6 @@ Lab1:
             ulong b7 = buf[ offset++ ];
             if( b7 > 0x7F )
             {
-                if( offset >= dataLen ) throw new BBOutOfBufRangeException();
                 if( offset < idx8 )
                 {
                     v |= ( b7 & 0x7F ) << lshift;
@@ -846,7 +816,6 @@ Lab1:
 
         protected static void Bit7Read32( ref uint v, byte[] buf, ref int offset, int dataLen )
         {
-            if( offset >= dataLen ) throw new BBOutOfBufRangeException();
             var idx5 = offset + 5;
             int lshift = 0;
             v = 0;
@@ -854,15 +823,14 @@ Lab1:
             uint b7 = buf[ offset++ ];
             if( b7 > 0x7F )
             {
-                if( offset == idx5 ) throw new BB_OverflowException();
-                if( offset >= dataLen ) throw new BBOutOfBufRangeException();
+                if( offset == idx5 ) throw new OverflowException();
                 v |= ( b7 & 0x7F ) << lshift;
                 lshift += 7;
                 goto Lab1;
             }
             else
             {
-                if( offset == idx5 && b7 > 15 ) throw new BB_OverflowException();
+                if( offset == idx5 && b7 > 15 ) throw new OverflowException();
                 else v |= b7 << lshift;
             }
         }
@@ -936,43 +904,23 @@ Lab1:
 
         #endregion
 
-        #region private funcs
+        #region protected funcs
 
-        public void ReserveCore( int capacity )
+        protected void ReserveCore( int capacity )
         {
             Array.Resize<byte>( ref buf, (int)Round2n( (uint)( capacity * 2 ) ) );
         }
 
+        protected int ReadLength( int minLen, int maxLen )
+        {
+            uint len = 0;
+            Bit7Read32( ref len, buf, ref offset, dataLen );
+            if( len < minLen || ( maxLen > 0 && len > maxLen ) ) throw new OverflowException();
+            return (int)len;
+        }
+
         #endregion
     }
-
-
-
-    #region exceptions
-
-    /// <summary>
-    /// 写入参数为空
-    /// </summary>
-    public class BBNullValueException : Exception { }
-
-    /// <summary>
-    /// 读到 buf 范围之外
-    /// </summary>
-    public class BBOutOfBufRangeException : Exception { }
-
-    /// <summary>
-    /// 长度值超限
-    /// </summary>
-    public class BB_OutOfLimitException : Exception { }
-
-    /// <summary>
-    /// 变长元素还原过程中超出元素存储位
-    /// </summary>
-    public class BB_OverflowException : Exception { }
-
-    #endregion
-
-
 
     #region interface
 
@@ -987,6 +935,5 @@ Lab1:
     }
 
     #endregion
-
 
 }

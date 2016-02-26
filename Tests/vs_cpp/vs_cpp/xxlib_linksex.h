@@ -5,9 +5,8 @@
 
 namespace xxlib
 {
-
     template <typename T>
-    class Links : Memmoveable
+    class LinksEx : Memmoveable
     {
     public:
         struct Node
@@ -16,20 +15,20 @@ namespace xxlib
             size_t          index;                          // nodes[ index ]
         };
         List<Node*>         nodes;
+        MemPool            *pool;                           // mempool for nodes
 
-        Links();											// Links( 64 )
-        explicit Links(size_t capacity);
-        Links(Links&& o);
-        Links(Links const& o);
-        Links& operator=(Links&& o);
-        Links& operator=(Links const& o);
-        ~Links();
+        LinksEx(MemPool *pool);				         		// Links( pool, 64 )
+        explicit LinksEx(MemPool *pool, size_t capacity);
+        LinksEx(LinksEx &&o);
+        LinksEx(LinksEx const &o) = delete;
+        LinksEx& operator=(LinksEx &&o);
+        LinksEx& operator=(LinksEx const &o) = delete;
+        ~LinksEx();
         template<typename...PTS>
         Node* EmplaceAdd(PTS&&...vps);						// same as Add but need value type's construct parameters
         Node* Add(T&& v);
         Node* Add(T const& v);
         Node* Find(T const& v);								// foreach scan. if exists, return Node*. else return nullptr
-        void Remove(T const& v);
         void Remove(Node* n);
         void Clear();
         bool Empty();
@@ -42,13 +41,13 @@ namespace xxlib
 
     protected:
         void Dispose(Node* n);
-        MemPool pool;                                       // mempool for nodes
     };
 
 
 
     template <typename T>
-    Links<T>::Links(size_t capacity)
+    LinksEx<T>::LinksEx(MemPool* pool, size_t capacity)
+        : pool(pool)
     {
         if (capacity <= 0)
         {
@@ -58,44 +57,23 @@ namespace xxlib
         {
             capacity = Utils::Round2n(capacity);
         }
-        pool.Init<Node>(capacity);
         nodes.Reserve(capacity);
     }
 
     template <typename T>
-    Links<T>::Links()
-        : Links(64)
+    LinksEx<T>::LinksEx(MemPool* pool)
+        : LinksEx(pool, 64)
     {
     }
 
     template <typename T>
-    Links<T>::Links(Links const& o)
-        : Links(o.Size())
+    LinksEx<T>::LinksEx(LinksEx&& o)
     {
-        operator=(o);
+        operator=((LinksEx&&)o);
     }
 
     template <typename T>
-    Links<T>::Links(Links&& o)
-    {
-        operator=((Links&&)o);
-    }
-
-    template <typename T>
-    Links<T>& Links<T>::operator=(Links const& o)
-    {
-        if (this == &o) return *this;
-        Clear();
-        Reserve(o.Size());
-        for (size_t i = 0; i < o.Size(); ++i)
-        {
-            Add(o[i]->value);
-        }
-        return *this;
-    }
-
-    template <typename T>
-    Links<T>& Links<T>::operator=(Links&& o)
+    LinksEx<T>& LinksEx<T>::operator=(LinksEx&& o)
     {
         nodes = std::move(o.nodes);
         pool = std::move(o.pool);
@@ -103,7 +81,7 @@ namespace xxlib
     }
 
     template <typename T>
-    Links<T>::~Links()
+    LinksEx<T>::~LinksEx()
     {
         for (size_t i = 0; i < nodes.dataLen; ++i)
         {
@@ -113,9 +91,9 @@ namespace xxlib
 
     template <typename T>
     template<typename...PTS>
-    typename Links<T>::Node* Links<T>::EmplaceAdd(PTS&&...ps)
+    typename LinksEx<T>::Node* LinksEx<T>::EmplaceAdd(PTS&&...ps)
     {
-        auto n = (Node*)pool.Alloc();
+        auto n = (Node*)pool->Alloc();
         new (&n->value) T(std::forward<PTS>(ps)...);
         n->index = nodes.dataLen;
         nodes.Add(n);
@@ -123,18 +101,18 @@ namespace xxlib
     }
 
     template <typename T>
-    typename Links<T>::Node* Links<T>::Add(T&& v)
+    typename LinksEx<T>::Node* LinksEx<T>::Add(T&& v)
     {
         return EmplaceAdd((T&&)v);
     }
     template <typename T>
-    typename Links<T>::Node* Links<T>::Add(T const& v)
+    typename LinksEx<T>::Node* LinksEx<T>::Add(T const& v)
     {
         return EmplaceAdd(v);
     }
 
     template <typename T>
-    typename Links<T>::Node* Links<T>::Find(T const& v)
+    typename LinksEx<T>::Node* LinksEx<T>::Find(T const& v)
     {
         for (size_t i = 0; i < nodes.dataLen; ++i)
         {
@@ -147,15 +125,7 @@ namespace xxlib
     }
 
     template <typename T>
-    void Links<T>::Remove(T const& v)
-    {
-        auto n = Find(v);
-        if (!n) return;
-        Remove(n);
-    }
-
-    template <typename T>
-    void Links<T>::Remove(Node* n)
+    void LinksEx<T>::Remove(Node* n)
     {
         auto last = nodes.Top();
         nodes.Pop();
@@ -166,76 +136,70 @@ namespace xxlib
         last->index = n->index;
 
         Dispose(n);
-        pool.Free(n);
+        pool->Free(n);
     }
 
     template <typename T>
-    void Links<T>::Clear()
+    void LinksEx<T>::Clear()
     {
         for (size_t i = 0; i < nodes.dataLen; ++i)
         {
             Dispose(nodes[i]);
-            pool.Free(nodes[i]);
+            pool->Free(nodes[i]);
         }
         nodes.Clear();
     }
 
 
     template <typename T>
-    void Links<T>::Reserve(size_t capacity)
+    void LinksEx<T>::Reserve(size_t capacity)
     {
         if (capacity <= nodes.bufLen) return;
         capacity = Utils::Round2n(capacity);
         nodes.Reserve(capacity);
-        if (pool.allPageItemCounter < capacity)
-        {
-            pool.SetPageSizeByItemCount(capacity - pool.allPageItemCounter);
-            pool.NewPage();
-            pool.SetPageSizeByItemCount(nodes.bufLen * 2);
-        }
     }
 
 
     template <typename T>
-    size_t Links<T>::Size() const
+    size_t LinksEx<T>::Size() const
     {
         return nodes.dataLen;
     }
 
     template <typename T>
-    void Links<T>::Dispose(Node* n)
+    void LinksEx<T>::Dispose(Node* n)
     {
         n->value.~T();
     }
 
 
     template <typename T>
-    bool Links<T>::Empty()
+    bool LinksEx<T>::Empty()
     {
         return nodes.dataLen == 0;
     }
 
 
     template <typename T>
-    typename Links<T>::Node const* Links<T>::operator[](size_t idx) const
+    typename LinksEx<T>::Node const* LinksEx<T>::operator[](size_t idx) const
     {
         assert(idx < nodes.dataLen);
         return nodes[idx];
     }
     template <typename T>
-    typename Links<T>::Node* Links<T>::operator[](size_t idx)
+    typename LinksEx<T>::Node* LinksEx<T>::operator[](size_t idx)
     {
         assert(idx < nodes.dataLen);
         return nodes[idx];
     }
     template <typename T>
-    typename Links<T>::Node const* Links<T>::At(size_t idx) const
+    typename LinksEx<T>::Node const* LinksEx<T>::At(size_t idx) const
     {
         assert(idx < nodes.dataLen);
         return nodes[idx];
     }
     template <typename T>
-    typename Links<T>::Node* Links<T>::At(size_t idx)
+    typename LinksEx<T>::Node* LinksEx<T>::At(size_t idx)
     {
         assert(idx < nodes.dataLen);
         return nodes[idx];

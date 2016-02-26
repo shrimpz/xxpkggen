@@ -6,133 +6,111 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="xxlib.cpp">
-      <Filter>xxlib</Filter>
-    </ClCompile>
-    <ClCompile Include="xxlib_bytebuffer.cpp">
-      <Filter>xxlib</Filter>
-    </ClCompile>
-    <ClCompile Include="xxlib_dtoa_milo.cpp">
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="CS.cpp" />
+    <ClCompile Include="CS_EnumToString.cpp" />
+    <ClCompile Include="CS_Handler.cpp" />
+    <ClCompile Include="xxlib_bb_utils.cpp">
       <Filter>xxlib</Filter>
     </ClCompile>
     <ClCompile Include="xxlib_list.cpp">
       <Filter>xxlib</Filter>
     </ClCompile>
-    <ClCompile Include="xxlib_pool.cpp">
+    <ClCompile Include="xxlib_mp.cpp">
       <Filter>xxlib</Filter>
     </ClCompile>
-    <ClCompile Include="xxlib_scopeguard.cpp">
+    <ClCompile Include="xxlib_sb.cpp">
       <Filter>xxlib</Filter>
     </ClCompile>
-    <ClCompile Include="xxlib_string.cpp">
+    <ClCompile Include="xxlib_sb_utils.cpp">
       <Filter>xxlib</Filter>
     </ClCompile>
-    <ClCompile Include="xxlib_utils_calc.cpp">
+    <ClCompile Include="xxlib_utils.cpp">
       <Filter>xxlib</Filter>
     </ClCompile>
-    <ClCompile Include="xxlib_utils_hash.cpp">
+    <ClCompile Include="xxlib_bb.cpp">
       <Filter>xxlib</Filter>
     </ClCompile>
-    <ClCompile Include="xxlib_utils_str.cpp">
-      <Filter>xxlib</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="CS.cpp" />
-    <ClCompile Include="CS_EnumToString.cpp" />
-    <ClCompile Include="CS_Handler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="xxlib.h">
+    <ClInclude Include="CS.h" />
+    <ClInclude Include="CS_EnumToString.h" />
+    <ClInclude Include="xxlib_bb.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_aligned_alloc.h">
+    <ClInclude Include="xxlib_bb_sb_ext.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_bytebuffer.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="xxlib_bytebuffer.hpp">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="xxlib_console.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="xxlib_console.hpp">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="xxlib_defines.h">
+    <ClInclude Include="xxlib_bb_utils.h">
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="xxlib_dict.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_dict.hpp">
+    <ClInclude Include="xxlib_fixedlist.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_dtoa_milo.h">
+    <ClInclude Include="xxlib_fp.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_hash.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="xxlib_hash.hpp">
+    <ClInclude Include="xxlib_hashset.h">
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="xxlib_links.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_links.hpp">
+    <ClInclude Include="xxlib_linksex.h">
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="xxlib_list.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_list.hpp">
+    <ClInclude Include="xxlib_list_bb_ext.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_pool.h">
+    <ClInclude Include="xxlib_mp.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_op.h">
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="xxlib_queue.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_queue.hpp">
+    <ClInclude Include="xxlib_sb.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_scopeguard.h">
+    <ClInclude Include="xxlib_sb_bb_ext.h">
+      <Filter>xxlib</Filter>
+    </ClInclude>
+    <ClInclude Include="xxlib_sb_utils.h">
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="xxlib_simpledate.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_singleton.h">
+    <ClInclude Include="xxlib_simpledate_bb_ext.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_stopwatch.h">
+    <ClInclude Include="xxlib_simpledate_sb_ext.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_string.h">
+    <ClInclude Include="xxlib_typedef.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_string.hpp">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="xxlib_timeouter.h">
-      <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="xxlib_utils_calc.h">
+    <ClInclude Include="xxlib_utils.h">
       <Filter>xxlib</Filter>
     </ClInclude>
     <ClInclude Include="xxlib_utils_hash.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_utils_hash.hpp">
+    <ClInclude Include="xxlib_abcd.h">
       <Filter>xxlib</Filter>
     </ClInclude>
-    <ClInclude Include="xxlib_utils_str.h">
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="xxlib_list.natvis">
       <Filter>xxlib</Filter>
-    </ClInclude>
-    <ClInclude Include="CS.h" />
-    <ClInclude Include="CS_EnumToString.h" />
+    </Natvis>
   </ItemGroup>
 </Project>

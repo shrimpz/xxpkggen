@@ -1,4 +1,5 @@
-#include "xxlib.h"
+#include "xxlib_typedef.h"
+#include "xxlib_bb.h"
 #include "CS.h"
 #include "CS_EnumToString.h"
 using namespace std;
@@ -45,8 +46,7 @@ void main()
         bb.Clear();
         bb.Write( o );
     }
-    Console.WriteLine( s.ElapsedMilliseconds() );
-    Cout << bb << "\n";
+	Cout(s(), bb, "\n");
     {
         CS::RootPkg1 o;
         bb.Read( o );

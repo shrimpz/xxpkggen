@@ -5,25 +5,10 @@
 
 namespace xxlib
 {
-    // 抄自 .net 的 Dict 的代码
-    // 注: 所有 assert(buckets  字样的代码都是防止 对象被 移动 后, 还试图正常使用( 调用除了析构功能的其他函数 ). 真需要用, 应该使用 Ensure 确保其重建
+    // 从 Dict 精简而来( 复制小改 )
 
-    // todo: 同步改造代码到 hashset 以及将确保机制应用到所有已存在的容器
-
-    // 去掉了链表深度达到 100 时随机更换 hash 算法的设计
-    // 去掉了枚举器支持, 版本检查
-    // 能 for
-
-    // 内存优化原则, 亲和 cpu cache
-    // hashCode, next 与 key value prev 分离, 查找热点相关内存相对集中
-
-    // todo: 提供真正连续的内存的分配方案, 传入 buf( buckets, nodes, items 三段合一 , 按长度比例瓜分.  load_factor 机制考虑 作用于 buckets 似乎可以吃多点内存提升性能减少浪费 )
-    // todo: 提供 vs 调试支持文件
-    // todo: 将 各种 int 换为 uint
-
-
-    template <typename TK, typename TV>
-    struct Dict : Memmoveable
+    template <typename TK>
+    struct HashSet : Memmoveable
     {
         struct Node
         {
@@ -33,7 +18,6 @@ namespace xxlib
         struct Data
         {
             TK              key;
-            TV              value;
             int             prev;
         };
 
@@ -41,7 +25,7 @@ namespace xxlib
         // 只是为了能 for( auto c : 
         struct Iter
         {
-            Dict& hs;
+            HashSet& hs;
             int i;
             bool operator!=(Iter const& other) { return i != other.i; }
             Iter& operator++()
@@ -52,7 +36,7 @@ namespace xxlib
                 }
                 return *this;
             }
-            Data& operator*() { return hs.items[i]; }
+            TK& operator*() { return hs.items[i].key; }
         };
         Iter begin()
         {
@@ -70,6 +54,7 @@ namespace xxlib
 
 
 
+
         int                 freeList;               // 自由空间链表头( next 指向下一个未使用单元 )
         int                 freeCount;              // 自由空间链长
         int                 count;                  // 已使用空间数
@@ -78,111 +63,82 @@ namespace xxlib
         Node               *nodes;                  // 节点数组
         Data               *items;                  // 数据数组( 与节点数组同步下标 )
 
-        explicit Dict(int capacity)
+        explicit HashSet(int capacity)
+            : freeList(-1)
+            , freeCount(0)
+            , count(0)
+            , bucketsLen((int)Utils::GetPrime(capacity, sizeof(Data)))
         {
-            Init();
-            Ensure(capacity);
+            Alloc();
         }
 
-        Dict()
-            : Dict(16)
+        HashSet()
+            : HashSet(16)
         {
         }
 
-        Dict(Dict const &o)
+        HashSet(HashSet const &o)
+            : HashSet(o.count)
         {
-            Init();
-            if (o.buckets)
-            {
-                Ensure(o.Size());
-                FastAdd(o);
-            }
+            FastAdd(o);
         }
 
-        Dict(Dict &&o)
+        HashSet(HashSet &&o)
+            : freeList(o.freeList)
+            , freeCount(o.freeCount)
+            , count(o.count)
+            , bucketsLen(o.bucketsLen)
+            , buckets(o.buckets)
+            , nodes(o.nodes)
+            , items(o.items)
         {
-            ShalowCopy(o);
-            o.Init();
+            o.buckets = nullptr;
         }
 
-        Dict& operator=(Dict const &o)
+        HashSet& operator=(HashSet const &o)
         {
-            if (!buckets && !o.buckets)         // 两边都空: 啥都不干, 返回
-            {
-                return *this;
-            }
-            else if (buckets && !o.buckets)     // 我方不空, 目标为空: 清空自己, 返回
+            if (bucketsLen < o.count)           // 确保 this.bucketsLen 大于等于 o.count( 不够就扩容 )
             {
                 DeleteAll();
-                Init();
-                return *this;
+                bucketsLen = (int)Utils::GetPrime(o.count, sizeof(Data));
+                Alloc();
             }
-            else if (!buckets)                  // 我方为空, 目标不空: 重建
-            {
-                Ensure(o.Size());
-            }
-            else if (bucketsLen < o.Size())     // 都不空: 我方装不下就 重建
-            {
-                DeleteAll();
-                Ensure(o.Size());
-            }
-            else                                // 都不空: 装得下就清空数据
+            else
             {
                 DeleteKVs();
                 memset(buckets, -1, bucketsLen * sizeof(int));
-                freeList = -1;
-                freeCount = 0;
-                // bucketsLen 及指针变量 维持原值, count 值经由 FastAdd 填充
             }
+            freeList = -1;
+            freeCount = 0;
 
             FastAdd(o);     // 复制数据 并设置 count 的值
             return *this;
         }
 
-        Dict& operator=(Dict &&o)
+        HashSet& operator=(HashSet &&o)
         {
-            if (buckets)
-            {
-                DeleteAll();
-            }
-            ShalowCopy(o);
-            o.Init();
-            return *this;
-        }
-
-        ~Dict()
-        {
-            if (!buckets) return;
             DeleteAll();
-            Init();
+
+            freeList = o.freeList;
+            freeCount = o.freeCount;
+            count = o.count;
+            bucketsLen = o.bucketsLen;
+            buckets = o.buckets;
+            nodes = o.nodes;
+            items = o.items;
+            o.buckets = nullptr;
+        }
+
+        ~HashSet()
+        {
+            if (!buckets) return;               // 判断一个就够了. 右值的情况下会为 nullptr
+            DeleteAll();
         }
 
 
-        void Swap(Dict &o)
+        template<typename K>
+        std::pair<bool, int> EmplaceAdd(K &&key)
         {
-            std::swap(freeList, o.freeList);
-            std::swap(freeCount, o.freeCount);
-            std::swap(count, o.count);
-            std::swap(bucketsLen, o.bucketsLen);
-            std::swap(buckets, o.buckets);
-            std::swap(nodes, o.nodes);
-            std::swap(items, o.items);
-        }
-
-
-        // 仅确保 dict 重新 "可用" ( move 后 ), 不能拿来扩容. 内部也用于 Init 后的内存初建
-        void Ensure(int capacity = 16)
-        {
-            if (buckets) return;
-            bucketsLen = (int)Utils::GetPrime(capacity, sizeof(Data));
-            Alloc();
-        }
-
-        template<typename K, typename ...VPS>
-        std::pair<bool, int> EmplaceAdd(bool override, K &&key, VPS &&... vps)
-        {
-            assert(bucketsLen);
-
             // hash 按桶数取模 定位到具体 链表, 扫找
             auto hashCode = Utils::GetHashCode(key);
             auto targetBucket = hashCode % bucketsLen;
@@ -190,11 +146,6 @@ namespace xxlib
             {
                 if (nodes[i].hashCode == hashCode && Utils::Equals(items[i].key, key))
                 {
-                    if (override)                       // 允许覆盖 value
-                    {
-                        items[i].value = TV(std::forward<VPS>(vps)...);
-                        return std::make_pair(true, i);
-                    }
                     return std::make_pair(false, i);
                 }
             }
@@ -228,37 +179,27 @@ namespace xxlib
             }
             buckets[targetBucket] = index;
 
-            // 移动复制构造写 key, value
+            // 移动复制构造写 key
             new (&items[index].key) TK(std::forward<K>(key));
-            new (&items[index].value) TV(std::forward<VPS>(vps)...);
             items[index].prev = -1;
 
             return std::make_pair(true, index);
         }
 
 
-        std::pair<bool, int> Add(TK const &k, TV const &v, bool override = false)
+        std::pair<bool, int> Add(TK const &k)
         {
-            return EmplaceAdd(override, k, v);
+            return EmplaceAdd(k);
         }
-        std::pair<bool, int> Add(TK const &k, TV &&v, bool override = false)
+        std::pair<bool, int> Add(TK &&k)
         {
-            return EmplaceAdd(override, k, (TV&&)v);
-        }
-        std::pair<bool, int> Add(TK &&k, TV const &v, bool override = false)
-        {
-            return EmplaceAdd(override, (TK&&)k, v);
-        }
-        std::pair<bool, int> Add(TK &&k, TV &&v, bool override = false)
-        {
-            return EmplaceAdd(override, (TK&&)k, (TV&&)v);
+            return EmplaceAdd((TK&&)k);
         }
 
 
         // 只支持没数据时扩容或空间用尽扩容( 如果不这样限制, 扩容时的 遍历损耗 略大 )
         void Reserve(int capacity = 0)
         {
-            assert(buckets);
             assert(count == 0 || count == bucketsLen);          // 确保扩容函数使用情型
 
             // 得到空间利用率最高的扩容长度并直接修改 bucketsLen( count 为当前数据长 )
@@ -278,8 +219,7 @@ namespace xxlib
             nodes = (Node*)realloc(nodes, bucketsLen * sizeof(Node));
 
             // item 数组扩容
-            if ((std::is_base_of<Memmoveable, TK>::value || std::is_pod<TK>::value)
-                && (std::is_base_of<Memmoveable, TV>::value || std::is_pod<TV>::value))
+            if (std::is_base_of<Memmoveable, TK>::value || std::is_pod<TK>::value)
             {
                 items = (Data*)realloc(items, bucketsLen * sizeof(Data));
             }
@@ -290,8 +230,6 @@ namespace xxlib
                 {
                     new (&newItems[i].key) TK((TK&&)items[i].key);
                     items[i].key.TK::~TK();
-                    new (&newItems[i].value) TV((TV&&)items[i].value);
-                    items[i].value.TV::~TV();
                 }
                 free(items);
                 items = newItems;
@@ -314,7 +252,6 @@ namespace xxlib
 
         int Find(TK const &key) const
         {
-            assert(buckets);
             auto hashCode = Utils::GetHashCode(key);
             for (int i = buckets[hashCode % bucketsLen]; i >= 0; i = nodes[i].next)
             {
@@ -326,10 +263,17 @@ namespace xxlib
             return -1;
         }
 
+        bool Contains(TK const &key) const
+        {
+            return Find(key) != -1;
+        }
+        bool Exists(TK const &key) const
+        {
+            return Find(key) != -1;
+        }
 
         void RemoveIndexAt(int idx)
         {
-            assert(buckets);
             assert(items[idx].prev != -2);
             if (items[idx].prev < 0)
             {
@@ -343,20 +287,18 @@ namespace xxlib
             {
                 items[nodes[idx].next].prev = items[idx].prev;
             }
-
+            
             nodes[idx].next = freeList;     // 当前节点已被移出链表, 令其 next 指向  自由节点链表头( next 有两种功用 )
             freeList = idx;
             freeCount++;
 
             items[idx].key.TK::~TK();       // 析构内存结构
-            items[idx].value.TV::~TV();
             items[idx].prev = -2;           // foreach 时的无效标志
         }
 
 
         void Remove(TK const &key)
         {
-            assert(buckets);
             auto idx = Find(key);
             if (idx != -1)
             {
@@ -367,7 +309,6 @@ namespace xxlib
 
         void Clear()
         {
-            assert(buckets);
             if (!count) return;
             DeleteKVs();
             memset(buckets, -1, bucketsLen * sizeof(int));
@@ -377,72 +318,34 @@ namespace xxlib
         }
 
 
-        int Size() const
+        size_t Size() const
         {
-            assert(buckets);
-            return int(count - freeCount);
+            return size_t(count - freeCount);
         }
 
         bool Empty()
         {
-            assert(buckets);
             return count == 0;
-        }
-
-        TV* TryGetValue(TK const &key)
-        {
-            int idx = Find(key);
-            if (idx >= 0) return items[idx].value;
-            return nullptr;
-        }
-
-        template<typename K>
-        TV& operator[](K &&key)
-        {
-            assert(buckets);
-            int idx = Find(key);
-            if (idx < 0)
-            {
-                idx = EmplaceAdd(true, std::forward<K>(key), TV()).second;
-            }
-            return items[idx].value;
-        }
-        template<typename K>
-        TV& At(K &&key)
-        {
-            return operator[](std::forward<K>(key));
         }
 
         TK& IndexAtKey(int idx)
         {
-            assert(buckets);
             assert(idx < count);
             return items[idx].key;
         }
-        TV& IndexAtValue(int idx)
-        {
-            assert(buckets);
-            assert(idx < count);
-            return items[idx].value;
-        }
         Data& At(int idx)
         {
-            assert(buckets);
             assert(idx < count);
             return items[idx];
         }
 
         TK const& IndexAtKey(int idx) const
         {
-            return const_cast<Dict*>(this)->IndexAtKey(idx);
-        }
-        TV const& IndexAtValue(int idx) const
-        {
-            return const_cast<Dict*>(this)->IndexAtValue(idx);
+            return const_cast<HashSet*>(this)->IndexAtKey(idx);
         }
         Data const& At(int idx) const
         {
-            return const_cast<Dict*>(this)->At(idx);
+            return const_cast<HashSet*>(this)->At(idx);
         }
 
     protected:
@@ -451,12 +354,11 @@ namespace xxlib
             items = (Data*)malloc(bucketsLen * sizeof(Data));
             nodes = (Node*)malloc(bucketsLen * sizeof(Node));
             buckets = (int*)malloc(bucketsLen * sizeof(int));
-            memset(buckets, -1, bucketsLen * sizeof(int));  // -1 代表 "空"
+            memset(buckets, -1, bucketsLen * sizeof(int));          // -1 代表 "空"
         }
 
-        void FastAdd(Dict const& o)                         // 用于 复制构造 和 operator=
+        void FastAdd(HashSet const& o)                         // 用于 复制构造 和 operator=
         {
-            assert(buckets && o.buckets);
             int i = 0;
             for (int oi = 0; oi < o.count; ++oi)
             {
@@ -471,57 +373,30 @@ namespace xxlib
                     }
                     buckets[targetBucket] = i;
                     new (&items[i].key) TK(o.items[oi].key);
-                    new (&items[i].value) TV(o.items[oi].value);
                     items[i].prev = -1;
                     ++i;
                 }
             }
             count = i;
         }
-
+        
         void DeleteKVs()                                    // 用于 析构, 复制, Clear
         {
-            assert(buckets);
             for (int i = 0; i < count; ++i)
             {
                 if (items[i].prev != -2)
                 {
                     items[i].key.TK::~TK();
-                    items[i].value.TV::~TV();
                 }
             }
         }
-
+        
         void DeleteAll()                                    // 用于析构, 移动复制
         {
-            assert(buckets);
             DeleteKVs();
             free(buckets);
             free(nodes);
             free(items);
-            buckets = nullptr;                              // 各种空判断的依据
-        }
-
-        void Init()
-        {
-            freeList = -1;
-            freeCount = 0;
-            count = 0;
-            bucketsLen = 0;
-            buckets = nullptr;
-            nodes = nullptr;
-            items = nullptr;
-        }
-
-        void ShalowCopy(Dict const& o)
-        {
-            freeList = o.freeList;
-            freeCount = o.freeCount;
-            count = o.count;
-            bucketsLen = o.bucketsLen;
-            buckets = o.buckets;
-            nodes = o.nodes;
-            items = o.items;
         }
     };
 }

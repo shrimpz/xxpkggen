@@ -1,11 +1,25 @@
 ﻿#pragma once
 
-#include "xxlib.h"
+#include "xxlib_list_bb_ext.h"
+#include "xxlib_simpledate_bb_ext.h"
+#include "xxlib_sb_bb_ext.h"
+
+
+// bytebuffer serial struct's base code
+#define XX_SERIALABLE_STRUCT_BASE( CN )         \
+CN() {}                                         \
+CN( CN const& o ) = default;                    \
+CN( CN && o ) = default;                        \
+CN& operator=( CN const& o ) = default;         \
+CN& operator=( CN && o ) = default;             \
+void WriteTo( xxlib::ByteBuffer& bb ) const;    \
+bool ReadFrom( xxlib::ByteBuffer& bb );
+
 
 namespace CS
 {
 // RootEnum1's desc
-enum class Enum1 : int
+enum class Enum1 : uint8
 {
     // RootEnum1 Item1's desc
     Item1 = 0,
@@ -80,7 +94,7 @@ struct RootPkg1 : xxlib::Memmoveable
     float m_float = 0;
     bool m_bool = false;
     xxlib::SimpleDate m_DateTime;
-    xxlib::String m_string;
+    xxlib::StringBuilder m_string;
     xxlib::ByteBuffer m_ByteBuffer;
     byte m_bytes[8] = { 0 };
     xxlib::List<::CS::Ns2::Enum1> m_ns2enum1s;

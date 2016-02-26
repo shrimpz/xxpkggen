@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <Type Name="xxlib::List&lt;*&gt;">
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen &gt; 0">dataLen = {dataLen}, bufLen = {bufLen}, needFree = {needFree}</DisplayString>
+    <DisplayString Condition="bufLen == 0">null</DisplayString>
+    <DisplayString Condition="bufLen &gt; 0 &amp;&amp; dataLen == 0">empty</DisplayString>
+    <Expand>
+      <ArrayItems>
+        <Size>dataLen</Size>
+        <ValuePointer>buf</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

@@ -29,8 +29,10 @@ namespace PackageGenerator
 
             // 文件头部
             sb.Append( @"#pragma once
+#include ""xxlib_list_bb_ext.h""
+#include ""xxlib_simpledate_bb_ext.h""
+#include ""xxlib_sb_bb_ext.h""
 
-#include ""xxlib.h""
 " );
 
             /*******************************************************/
@@ -147,7 +149,7 @@ namespace " + c.Namespace + @"
                 sb.Append( @"
 struct " + c.Name + @" : xxlib::Memmoveable
 {" );
-#if false
+#if true
                 // packageId;
                 if( c.StructType == StructTypes.Package )
                 {
@@ -566,14 +568,14 @@ char const* const GetDesc( " + tn + @" e )
             {
                 switch( d.Name )
                 {
-                    case "Byte": rtv = "byte"; break;
-                    case "SByte": rtv = "sbyte"; break;
-                    case "UInt16": rtv = "ushort"; break;
+                    case "Byte": rtv = "unsigned char"; break;
+                    case "SByte": rtv = "signed char"; break;
+                    case "UInt16": rtv = "unsigned short"; break;
                     case "Int16": rtv = "short"; break;
-                    case "UInt32": rtv = "uint"; break;
+                    case "UInt32": rtv = "unsigned int"; break;
                     case "Int32": rtv = "int"; break;
-                    case "UInt64": rtv = "uint64"; break;
-                    case "Int64": rtv = "int64"; break;
+                    case "UInt64": rtv = "unsigned long long"; break;
+                    case "Int64": rtv = "long long"; break;
                     case "Double": rtv = "double"; break;
                     case "Single": rtv = "float"; break;
                     case "Boolean": rtv = "bool"; break;
@@ -606,14 +608,14 @@ char const* const GetDesc( " + tn + @" e )
         {
             switch( e.EnumUnderlyingType )
             {
-                case "Byte": return "uint8";
-                case "SByte": return "int8";
-                case "UInt16": return "uint16";
-                case "Int16": return "int16";
-                case "UInt32": return "uint";
+                case "Byte": return "unsigned char";
+                case "SByte": return "signed char";
+                case "UInt16": return "unsigned short";
+                case "Int16": return "short";
+                case "UInt32": return "unsigned int";
                 case "Int32": return "int";
-                case "UInt64": return "uint64";
-                case "Int64": return "int64";
+                case "UInt64": return "unsigned long long";
+                case "Int64": return "long long";
             }
             throw new Exception( "unsupported data type" );
         }

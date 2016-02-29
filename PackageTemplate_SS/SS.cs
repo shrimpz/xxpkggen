@@ -52,6 +52,11 @@ enum UserNetStates
 	Offline
 }
 
+class GetUsers
+{
+	List<UserNetInfo> users;
+}
+
 [Struct, Desc( "用户网络相关信息数据结构" )]
 class UserNetInfo
 {
@@ -60,11 +65,18 @@ class UserNetInfo
     [Desc("登录名")]
 	string 				loginName;
 	[Desc("用户网络状态")]
-	UserNetStates 	netState;
+	UserNetStates 	    netState;
 }
 
-class GetUsers
-{
-	List<UserNetInfo> users;
-}
+
+
+
+// RPC 设计构思中
+//interface RPC1
+//{
+//    List<UserNetInfo> GetOnlineUsers();
+//    int GetUsersCount();
+//    bool KickUser( UserNetInfo uni );
+
+//}
 

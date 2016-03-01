@@ -19,8 +19,24 @@ namespace vs_cs
             {
                 bs.Add( ( i & 1 ) > 0 );
             }
-            bb.Write( bs );
-            bb.Dump();
+            // 预热
+            for( int i = 0; i < 999999; ++i )
+            {
+                bb.Write( bs );
+            }
+            bb.Clear();
+            var sw = Stopwatch.StartNew();
+            for( int i = 0; i < 999999; ++i )
+            {
+                bb.Write( bs );
+            }
+            Console.Write( "C# .NET List<bool>[ 32 ] >> bb 999999 times, elapsed ms = " + sw.ElapsedMilliseconds + '\n' );
+            sw.Restart();
+            while( bb.offset < bb.dataLen )
+            {
+                bb.Read( ref bs );
+            }
+            Console.Write( "C# .NET bb >> List<bool> 999999 times, elapsed ms = " + sw.ElapsedMilliseconds + '\n' );
             return;
 
 

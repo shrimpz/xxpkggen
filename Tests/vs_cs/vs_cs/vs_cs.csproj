@@ -65,14 +65,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CS.cs" />
-    <Compile Include="CS_ByteBuffer_Ext.cs" />
-    <Compile Include="CS_ByteBuffer_Partial.cs" />
-    <Compile Include="CS_Handler.cs" />
-    <Compile Include="CS_Partial.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ByteBuffer.cs" />
+    <Compile Include="SS.cs" />
+    <Compile Include="SS_ByteBuffer_Ext.cs" />
+    <Compile Include="SS_ByteBuffer_Partial.cs" />
+    <Compile Include="SS_Handler.cs" />
+    <Compile Include="SS_Partial.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

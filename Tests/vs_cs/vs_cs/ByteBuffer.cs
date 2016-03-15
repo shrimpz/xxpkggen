@@ -229,21 +229,27 @@ namespace xxlib
 
 
         // 数组都算作定长, 不写长度值
-        public void Write<T>( T[] vs ) where T : struct, IBBWriter
+        public void Write<T>( T[] vs ) where T : IBBWriter
         {
             foreach( var v in vs )
             {
                 Write( v );
             }
         }
-        // string 不是 struct
-        public void Write( string[] vs )
-        {
-            foreach( var v in vs )
-            {
-                Write( v );
-            }
-        }
+
+        public void Write( sbyte[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( short[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( ushort[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( int[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( uint[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( long[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( ulong[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( float[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( double[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( string[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( DateTime[] vs ) { foreach( var v in vs ) { Write( v ); } }
+        public void Write( ByteBuffer[] vs ) { foreach( var v in vs ) { Write( v ); } }
+
         public void Write( byte[] v )
         {
             var vlen = v.Length;
@@ -291,7 +297,11 @@ namespace xxlib
             }
         }
 
-        public void Write<T>( List<T> vs ) where T : struct, IBBWriter
+
+
+
+
+        public void Write<T>( List<T> vs ) where T : IBBWriter
         {
             WriteLength( vs.Count );
             foreach( var v in vs )
@@ -299,14 +309,23 @@ namespace xxlib
                 Write( v );
             }
         }
-        public void Write( List<string> vs )
-        {
-            WriteLength( vs.Count );
-            foreach( var v in vs )
-            {
-                Write( v );
-            }
-        }
+
+        public void Write( List<byte> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<sbyte> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<short> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<ushort> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<int> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<uint> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<long> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<ulong> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<float> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<double> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<string> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<DateTime> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<ByteBuffer> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+
+
+
         public void Write( List<bool> vs )
         {
             WriteLength( vs.Count );
@@ -342,7 +361,9 @@ namespace xxlib
         }
 
 
-        public void Write<T>( List<List<T>> vs ) where T : struct, IBBWriter
+
+
+        public void Write<T>( List<List<T>> vs ) where T : IBBWriter
         {
             WriteLength( vs.Count );
             foreach( var v in vs )
@@ -350,22 +371,21 @@ namespace xxlib
                 Write( v );
             }
         }
-        public void Write( List<List<string>> vs )
-        {
-            WriteLength( vs.Count );
-            foreach( var v in vs )
-            {
-                Write( v );
-            }
-        }
-        public void Write( List<List<bool>> vs )
-        {
-            WriteLength( vs.Count );
-            foreach( var v in vs )
-            {
-                Write( v );
-            }
-        }
+
+        public void Write( List<List<byte>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<sbyte>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<short>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<ushort>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<int>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<uint>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<long>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<ulong>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<float>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<double>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<bool>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<string>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<DateTime>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
+        public void Write( List<List<ByteBuffer>> vs ) { WriteLength( vs.Count ); foreach( var v in vs ) { Write( v ); } }
 
         #endregion
 
@@ -481,24 +501,31 @@ namespace xxlib
         }
 
         // 数组都算作定长, 不读长度值
-        public void Read<T>( ref T[] vs ) where T : struct, IBBReader
+        public void Read<T>( ref T[] vs ) where T : IBBReader
         {
             for( int i = 0; i < vs.Length; ++i )
             {
                 Read( ref vs[ i ] );
             }
         }
+
+        public void Read( ref sbyte[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref short[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref ushort[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref int[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref uint[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref long[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref ulong[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref float[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref string[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref DateTime[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+        public void Read( ref ByteBuffer[] vs ) { for( int i = 0; i < vs.Length; ++i ) { Read( ref vs[ i ] ); } }
+
+
         public void Read( ref byte[] v )
         {
             Array.Copy( buf, offset, v, 0, v.Length );
             offset += v.Length;
-        }
-        public void Read( ref string[] vs )
-        {
-            for( int i = 0; i < vs.Length; ++i )
-            {
-                Read( ref vs[ i ] );
-            }
         }
         public void Read( ref bool[] vs )
         {
@@ -532,11 +559,11 @@ namespace xxlib
         }
 
 
-        public void Read<T>( ref List<T> vs ) where T : struct, IBBReader
+        public void Read<T>( ref List<T> vs ) where T : IBBReader, new()
         {
             Read( ref vs, 0, 0 );
         }
-        public void Read<T>( ref List<T> vs, int minLen, int maxLen ) where T : struct, IBBReader
+        public void Read<T>( ref List<T> vs, int minLen, int maxLen ) where T : IBBReader, new()
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -552,21 +579,34 @@ namespace xxlib
             return rtv;
         }
 
-        public void Read( ref List<string> vs )
-        {
-            Read( ref vs, 0, 0 );
-        }
-        public void Read( ref List<string> vs, int minLen, int maxLen )
-        {
-            int len = ReadLength( minLen, maxLen );
-            vs.Clear();
-            for( int i = 0; i < len; i++ )
-            {
-                var s = "";
-                Read( ref s );
-                vs.Add( s );
-            }
-        }
+        public void Read( ref List<byte> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<sbyte> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<short> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<ushort> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<int> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<uint> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<long> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<ulong> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<float> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<double> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<string> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<DateTime> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<ByteBuffer> vs ) { Read( ref vs, 0, 0 ); }
+
+        public void Read( ref List<byte> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { byte s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<sbyte> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { sbyte s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<short> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { short s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<ushort> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { ushort s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<int> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { int s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<uint> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { uint s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<long> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { long s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<ulong> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { ulong s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<float> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { float s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<double> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { double s = 0; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<string> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { string s = ""; Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<DateTime> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { DateTime s = new DateTime(); Read( ref s ); vs.Add( s ); } }
+        public void Read( ref List<ByteBuffer> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { ByteBuffer s = new ByteBuffer(); Read( ref s ); vs.Add( s ); } }
+
         public void Read( ref List<bool> vs )
         {
             Read( ref vs, 0, 0 );
@@ -605,12 +645,16 @@ namespace xxlib
         }
 
 
-        public void Read<T>( ref List<List<T>> vs ) where T : struct, IBBReader
+
+
+
+
+        public void Read<T>( ref List<List<T>> vs ) where T : IBBReader, new()
         {
             Read( ref vs, 0, 0 );
         }
 
-        public void Read<T>( ref List<List<T>> vs, int minLen, int maxLen ) where T : struct, IBBReader
+        public void Read<T>( ref List<List<T>> vs, int minLen, int maxLen ) where T : IBBReader, new()
         {
             int len = ReadLength( minLen, maxLen );
             vs.Clear();
@@ -622,36 +666,36 @@ namespace xxlib
             }
         }
 
-        public void Read( ref List<List<string>> vs )
-        {
-            Read( ref vs, 0, 0 );
-        }
-        public void Read( ref List<List<string>> vs, int minLen, int maxLen )
-        {
-            int len = ReadLength( minLen, maxLen );
-            vs.Clear();
-            for( int i = 0; i < len; i++ )
-            {
-                var o = new List<string>();
-                Read( ref o, 0, 0 );
-                vs.Add( o );
-            }
-        }
-        public void Read( ref List<List<bool>> vs )
-        {
-            Read( ref vs, 0, 0 );
-        }
-        public void Read( ref List<List<bool>> vs, int minLen, int maxLen )
-        {
-            int len = ReadLength( minLen, maxLen );
-            vs.Clear();
-            for( int i = 0; i < len; i++ )
-            {
-                var o = new List<bool>();
-                Read( ref o, 0, 0 );
-                vs.Add( o );
-            }
-        }
+
+        public void Read( ref List<List<byte>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<sbyte>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<short>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<ushort>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<int>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<uint>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<long>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<ulong>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<float>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<double>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<bool>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<string>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<DateTime>> vs ) { Read( ref vs, 0, 0 ); }
+        public void Read( ref List<List<ByteBuffer>> vs ) { Read( ref vs, 0, 0 ); }
+
+        public void Read( ref List<List<byte>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<byte>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<sbyte>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<sbyte>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<short>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<short>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<ushort>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<ushort>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<int>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<int>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<uint>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<uint>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<long>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<long>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<ulong>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<ulong>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<float>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<float>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<double>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<double>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<bool>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<bool>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<string>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<string>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<DateTime>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<DateTime>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
+        public void Read( ref List<List<ByteBuffer>> vs, int minLen, int maxLen ) { int len = ReadLength( minLen, maxLen ); vs.Clear(); for( int i = 0; i < len; i++ ) { var o = new List<ByteBuffer>(); Read( ref o, 0, 0 ); vs.Add( o ); } }
 
 
         #endregion

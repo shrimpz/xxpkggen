@@ -16,6 +16,7 @@
 // Compress                                 // 用于标记某成员 "使用变长存储". 仅作用于 32/64 位整型成员或 double
 // ProjectTypes                             // 用于标记某个 "位于全局范围的enum" 为 项目枚举
 // ProjectType                              // 用于标记某个 包 属于某个项目( 可配置多个项目复用 ), 参数就是 ProjectTypes 所标注的 enum
+// Deprecated                               // 禁用标志( 还是会生成，但是可能会带 否决标记 )
 
 
 /********************************************************/
@@ -171,7 +172,11 @@ namespace PackageLibrary
         }
     }
 
-
+    [System.AttributeUsage(System.AttributeTargets.Enum | System.AttributeTargets.Class)]
+    public class Deprecated : System.Attribute
+    {
+        public bool Error { get; set; }
+    }
 
     // more attribute here ...
 }

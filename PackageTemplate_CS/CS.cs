@@ -10,6 +10,7 @@ enum PTS
     Server1
 }
 
+[Deprecated]
 [ProjectType(PTS.Client1, SendRecvType = SendRecvTypes.SendOnly)]
 class ClientToServer1
 {

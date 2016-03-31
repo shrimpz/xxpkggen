@@ -32,6 +32,7 @@ public class Struct
     public string Namespace = "";
     public string Name = "";
     public string Desc = "";
+    public bool? Deprecated = null;
     public List<Member> Members = new List<Member>();
     public int RefCounter = 0;      // 被别的 Struct 引用的次数( 从大到小排可实现被引用的类前置 )
     public List<Project> Projects = new List<Project>();

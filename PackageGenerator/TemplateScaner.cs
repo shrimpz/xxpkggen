@@ -53,6 +53,7 @@ namespace PackageGenerator
                 e.Namespace = r_enum.Namespace ?? "";
                 e.Name = r_enum.Name.ToString();
                 e.Desc = r_enum.GetAttrDesc();
+                e.Deprecated = r_enum.GetAttrDeprecated();
                 var ut = r_enum.GetEnumUnderlyingType();
                 e.EnumUnderlyingType = ut.Name;
 
@@ -83,6 +84,7 @@ namespace PackageGenerator
                 c.Namespace = r_class.Namespace ?? "";
                 c.Name = r_class.Name;
                 c.Desc = r_class.GetAttrDesc();
+                c.Deprecated = r_class.GetAttrDeprecated();
 
                 var ps = r_class.GetProjectTypeNames();
                 c.Projects.AddRange(template.Projects.Where(a => ps.Contains(a.Name)));
@@ -235,6 +237,19 @@ namespace PackageGenerator
             }
             return rtv;
         }
+
+
+        public static bool? GetAttrDeprecated<T>(this T t) where T : _MemberInfo
+        {
+            foreach (var r_attribute in t.GetCustomAttributes(false))
+            {
+                if (r_attribute is LIB.Deprecated)
+                    return ((LIB.Deprecated)r_attribute).Error;
+            }
+            return null;
+        }
+
+
 
 
         // 转枚举值专用

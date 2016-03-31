@@ -6,6 +6,8 @@ public class Template
     public List<Struct> Structs = new List<Struct>();
     public List<string> Namespaces = new List<string>();
     public List<Project> Projects = new List<Project>();
+    public int MaxPackageID = 0;
+    public string Name = "";
 }
 
 public enum StructTypes
@@ -19,6 +21,7 @@ public class Project
 {
     public string Name = "";
     public string Desc = "";
+    public int MaxPackageID = 0;
 }
 
 public class Struct
@@ -66,8 +69,8 @@ public class Struct
     }
 
     // 仅当 StructType 为 Enum 时有效, 包自增编号
-    private short _PackageId = 0;
-    public short PackageId
+    private int _PackageId = 0;
+    public int PackageId
     {
         get
         {

@@ -82,6 +82,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GenProjCS.cs" />
     <Compile Include="Template.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="GenCPP.cs" />

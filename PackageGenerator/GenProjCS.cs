@@ -87,7 +87,7 @@ namespace xxlib
 ");
         }
 
-        public static void Gen_tn_pn(StringBuilder sb, Template t, List<Struct> proj_enums, List<Struct> proj_packages_and_structs)
+        public static void Gen_tn_pn(StringBuilder sb, Template t, List<Struct> proj_enums, List<Struct> proj_packages_and_structs, Project proj)
         {
             // 文件头部
             sb.Clear();
@@ -160,7 +160,7 @@ partial class " + c.Name + @"
                 if (c.StructType == StructTypes.Package)
                 {
                     sb.Append(@"
-    public const short packageId = " + c.PackageId + @";
+    public const ushort packageId = 0x" + (proj == null ? "00" : proj.ProjectId.ToString("x2")) + c.PackageId.ToString("x2") + @"u;
 ");
                 }
 
@@ -274,7 +274,7 @@ public static partial class PackageHandler
 {
     public static bool Handle( ByteBuffer bb )
     {
-        short pkgId = 0;
+        ushort pkgId = 0;
         try
         {
             bb.Read( ref pkgId );
@@ -365,7 +365,7 @@ public static partial class PackageHandler
                 Gen_tn_pn_ByteBuffer_Partial(sb, proj_enums);
                 sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + "_ByteBuffer_Partial.cs"));
 
-                Gen_tn_pn(sb, t, proj_enums, proj_packages_and_structs);
+                Gen_tn_pn(sb, t, proj_enums, proj_packages_and_structs, proj);
                 sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + ".cs"));
 
                 Gen_tn_pn_Partial(sb, t, proj_enums, proj_packages_and_structs);
@@ -387,7 +387,7 @@ public static partial class PackageHandler
                 Gen_tn_pn_ByteBuffer_Partial(sb, global_enums);
                 sb.WriteToFile(Path.Combine(outDir, "_" + t.Name + "_ByteBuffer_Partial.cs"));
 
-                Gen_tn_pn(sb, t, global_enums, global_packages_and_structs);
+                Gen_tn_pn(sb, t, global_enums, global_packages_and_structs, null);
                 sb.WriteToFile(Path.Combine(outDir, "_" + t.Name + ".cs"));
 
                 Gen_tn_pn_Partial(sb, t, global_enums, global_packages_and_structs);

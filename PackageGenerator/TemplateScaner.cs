@@ -42,6 +42,7 @@ namespace PackageGenerator
                             proj.Name = f.Name;
                             proj.Desc = f.GetAttrDesc();
                             template.Projects.Add(proj);
+                            proj.ProjectId = template.Projects.Count;   // 1 开始
                         }
                     }
                     continue;
@@ -91,12 +92,12 @@ namespace PackageGenerator
                     {
                         foreach (var p in c.Projects)
                         {
-                            c.PackageId = p.MaxPackageID++;         // 填包自增
+                            c.PackageId = p.MaxPackageId++;         // 填包自增
                         }
                     }
                     else
                     {
-                        c.PackageId = template.MaxPackageID++;      // 填包自增
+                        c.PackageId = template.MaxPackageId++;      // 填包自增
                     }
                 }
                 template.Structs.Add(c);

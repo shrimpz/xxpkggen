@@ -6,7 +6,7 @@ public class Template
     public List<Struct> Structs = new List<Struct>();
     public List<string> Namespaces = new List<string>();
     public List<Project> Projects = new List<Project>();
-    public int MaxPackageID = 0;
+    public int MaxPackageId = 0;
     public string Name = "";
 }
 
@@ -19,9 +19,10 @@ public enum StructTypes
 
 public class Project
 {
+    public int ProjectId = 1;              // 包id前缀. 0 被用作全局的包
     public string Name = "";
     public string Desc = "";
-    public int MaxPackageID = 0;
+    public int MaxPackageId = 0;
 }
 
 public class Struct
@@ -59,13 +60,13 @@ public class Struct
 
     public void EnsureEnum()
     {
-        if( StructType != StructTypes.Enum )
-            throw new Exception( "only Enum type have this property" );
+        if (StructType != StructTypes.Enum)
+            throw new Exception("only Enum type have this property");
     }
     public void EnsurePackage()
     {
-        if( StructType != StructTypes.Package )
-            throw new Exception( "only Package type have this property" );
+        if (StructType != StructTypes.Package)
+            throw new Exception("only Package type have this property");
     }
 
     // 仅当 StructType 为 Enum 时有效, 包自增编号
@@ -138,8 +139,8 @@ public class Member
 
     private void EnsureParentIsNotEnum()
     {
-        if( Parent.StructType == StructTypes.Enum )
-            throw new Exception( "enum haven't Type" );
+        if (Parent.StructType == StructTypes.Enum)
+            throw new Exception("enum haven't Type");
     }
 
     // 仅当 Parent.StructType 不为 Enum 时有效
@@ -182,12 +183,14 @@ public class Member
     {
         get
         {
-            if( !Type.IsContainer ) throw new Exception( "is not a container" );
+            if (!Type.IsContainer)
+                throw new Exception("is not a container");
             return _MinLen;
         }
         set
         {
-            if( !Type.IsContainer ) throw new Exception( "is not a container" );
+            if (!Type.IsContainer)
+                throw new Exception("is not a container");
             _MinLen = value;
         }
     }
@@ -199,12 +202,14 @@ public class Member
     {
         get
         {
-            if( !Type.IsContainer ) throw new Exception( "is not a container" );
+            if (!Type.IsContainer)
+                throw new Exception("is not a container");
             return _MaxLen;
         }
         set
         {
-            if( !Type.IsContainer ) throw new Exception( "is not a container" );
+            if (!Type.IsContainer)
+                throw new Exception("is not a container");
             _MaxLen = value;
         }
     }
@@ -295,14 +300,14 @@ public class DataType
     {
         get
         {
-            if( Category != DataTypeCategories.Custom )
-                throw new Exception( "Category is not a Custom" );
+            if (Category != DataTypeCategories.Custom)
+                throw new Exception("Category is not a Custom");
             return _Custom;
         }
         set
         {
-            if( Category != DataTypeCategories.Custom )
-                throw new Exception( "Category is not a Custom" );
+            if (Category != DataTypeCategories.Custom)
+                throw new Exception("Category is not a Custom");
             _Custom = value;
         }
     }
@@ -313,10 +318,10 @@ public class DataType
     {
         get
         {
-            if( Category != DataTypeCategories.Array
-                && Category != DataTypeCategories.Generic )
-                throw new Exception( "only Array Or Generic type have this property" );
-            if( _ChildTypes == null )
+            if (Category != DataTypeCategories.Array
+                && Category != DataTypeCategories.Generic)
+                throw new Exception("only Array Or Generic type have this property");
+            if (_ChildTypes == null)
             {
                 _ChildTypes = new List<DataType>();
             }
@@ -329,7 +334,7 @@ public class DataType
     {
         get
         {
-            return ChildTypes[ 0 ];
+            return ChildTypes[0];
         }
     }
 }

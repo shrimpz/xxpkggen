@@ -259,7 +259,7 @@ public partial class " + c.Name + @" : IBBReader, IBBWriter
                 foreach( var f in c.Members )
                 {
                     sb.Append( @"
-        bb." + ( f.NoCompress ? "" : ( f.Type.Compressable() ? "Var" : "" ) ) + "Write( " + f.Name + " );" );
+        bb." + ( f.Compress ? "" : ( f.Type.Compressable() ? "Var" : "" ) ) + "Write( " + f.Name + " );" );
                 }
                 sb.Append( @" 
     }
@@ -269,7 +269,7 @@ public partial class " + c.Name + @" : IBBReader, IBBWriter
                 foreach( var f in c.Members )
                 {
                     sb.Append( @"
-        bb." + ( f.NoCompress ? "" : ( f.Type.Compressable() ? "Var" : "" ) ) + "Read( ref " + f.Name );
+        bb." + ( f.Compress ? "" : ( f.Type.Compressable() ? "Var" : "" ) ) + "Read( ref " + f.Name );
                     if( f.Type.IsContainer && !f.Type.IsArray )
                     {
                         sb.Append( @", " + f.MinLen + ", " + f.MaxLen );

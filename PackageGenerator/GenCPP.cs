@@ -258,7 +258,7 @@ void " + GetNamespace( c ) + "::" + c.Name + @"::WriteTo( ByteBuffer& bb ) const
                 {
                     // bb.[Var]Write
                     sb.Append( @"
-    bb." + (f.NoCompress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Write( this->" + f.Name + " );" );
+    bb." + (f.Compress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Write( this->" + f.Name + " );" );
                 }
 
                 // } // ns::WriteTo
@@ -273,7 +273,7 @@ bool " + GetNamespace( c ) + "::" + c.Name + @"::ReadFrom( ByteBuffer& bb )
                 {
                     // bb.[Var]Read
                     sb.Append( @"
-    if( !bb." + (f.NoCompress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Read( this->" + f.Name );
+    if( !bb." + (f.Compress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Read( this->" + f.Name );
                     if( f.Type.IsContainer && !f.Type.IsArray )
                     {
                         sb.Append( @", " + f.MinLen + ", " + f.MaxLen );

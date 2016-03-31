@@ -20,6 +20,31 @@ namespace PackageGenerator
             var r_enums = ( from t in asm.GetTypes() where ( t.IsEnum ) select t ).ToList();
             foreach( var r_enum in r_enums )
             {
+                // 剔除掉标记为 ProjectTypes 的全局 enum
+                if(r_enum.IsProjectTypes())
+                {
+                    if (template.Projects.Count > 0)
+                    {
+                        throw new Exception("存在两个或以上的 enum 都被标记了 [ProjectTypes].");
+                    }
+                    else
+                    {
+                        var fs = r_enum.GetFields(BindingFlags.Static | BindingFlags.Public);
+                        if (fs.Count() == 0)
+                        {
+                            throw new Exception("enum " + r_enum.FullName + " can't be empty");
+                        }
+                        foreach (var f in fs)
+                        {
+                            var proj = new Project();
+                            proj.Name = f.Name;
+                            proj.Desc = f.GetAttrDesc();
+                            template.Projects.Add(proj);
+                        }
+                    }
+                    continue;
+                }
+
                 var e = new Struct();
                 e.StructType = StructTypes.Enum;
                 e.Namespace = r_enum.Namespace ?? "";
@@ -93,7 +118,7 @@ namespace PackageGenerator
                     {
                         throw new Exception( r_class.FullName + "." + r_field.Name + " need Limit( n )" );
                     }
-                    f.NoCompress = r_field.GetAttrNoCompress();
+                    f.Compress = r_field.GetAttrCompress();
                     c.Members.Add( f );
                 }
             }
@@ -142,11 +167,11 @@ namespace PackageGenerator
             }
             return false;
         }
-        public static bool GetAttrNoCompress<T>( this T t ) where T : _MemberInfo
+        public static bool GetAttrCompress<T>( this T t ) where T : _MemberInfo
         {
             foreach( var r_attribute in t.GetCustomAttributes( false ) )
             {
-                if( r_attribute is LIB.NoCompress ) return true;
+                if( r_attribute is LIB.Compress ) return true;
             }
             return false;
         }
@@ -161,6 +186,19 @@ namespace PackageGenerator
                 }
             }
             return new KeyValuePair<int, int>( 0, 0 );
+        }
+
+        public static bool IsProjectTypes<T>(this T t) where T : _MemberInfo
+        {
+            foreach (var r_attribute in t.GetCustomAttributes(false))
+            {
+                if (r_attribute is LIB.ProjectTypes)
+                {
+                    if(string.IsNullOrEmpty(t.GetType().Namespace)) return true;
+                    throw new Exception("[ProjectTypes] 必须标记在全局范围( 即不在任何 namespace 内的 )的 enum 头上");
+                }
+            }
+            return false;
         }
 
 
@@ -249,103 +287,3 @@ namespace PackageGenerator
 
     }
 }
-
-//else if( a is Enabled ) fps.Enabled = ( (Enabled)a ).Value;
-//else if( a is DecodeCondation ) fps.DecodeCondation = (DecodeCondation)a;
-//else if( a is EncodeCondation ) fps.EncodeCondation = (EncodeCondation)a;
-// "ChkValue": fps.MinValue = ((ChkValue)a).Min; fps.MinValue = ((ChkValue)a).Max; break;
-
-// 扫空 interface（用于 Decode, Encode 的参数列表）
-//var interfaces = from t in asm.GetTypes() where t.IsInterface && t.Namespace != libNS select t;
-//foreach( var i in interfaces )
-//{
-//    var p = new Project { Name = i.Name };
-//    foreach( var a in i.GetCustomAttributes( false ) )
-//    {
-//        if( a is Desc ) p.Desc = ( (Desc)a ).Value;
-//        // more proj attributes
-//    }
-//    template.Projects.Add( p );
-//}
-//else if( a is Enabled ) cps.Enabled = ( (Enabled)a ).Value;
-//else if( a is Opcode ) cps.Opcode = ( (Opcode)a ).Value;
-//else if( a is Returns ) cps.Results = ( (Returns)a ).Value.ToList();
-//else if( a is CallBy ) cps.CallBy = ( (CallBy)a ).Value.ToList();
-
-
-// 扫项目列表
-//var r_projenums = from t in asm.GetTypes() where ( t.IsEnum ) && t.Namespace != libNS && t.Name == projEnum select t;
-//if( r_projenums.Count() > 0 )
-//{
-//    var e = r_projenums.First();
-//    var r_fields = e.GetFields( BindingFlags.Static | BindingFlags.Public );
-//    foreach( var r_field in r_fields )
-//    {
-//        var p = new Project { Name = r_field.Name };
-//        foreach( var a in r_field.GetCustomAttributes( false ) )
-//        {
-//            if( a is LIB.Desc ) p.Desc = ( (LIB.Desc)a ).Value;
-//        }
-//        template.Projects.Add( p );
-//    }
-//}
-//else if( r_attribute is LIB.Default ) f.Default = ((LIB.Default)r_attribute).Value;
-//else if( r_attribute is LIB.Get ) f.Get = ((LIB.Get)r_attribute).Value;
-//else if( r_attribute is LIB.Get ) f.Get = ((LIB.Get)r_attribute).Value;
-//else if( r_attribute is LIB.Limits ) { fillDeclareLimits( f.Declare, (LIB.Limits)r_attribute ); }
-//else if( r_attribute is LIB.Condation )
-//{
-//    var ps = ( (LIB.Condation)r_attribute ).Value;
-//    for( int i = 0; i < ps.Length; i += 2 )
-//    {
-//        // todo: 检查如果被引用的 fields 位于当前 field 的后方，条件非法
-//        f.Condations.Add( c.Fields.Find( a => a.Name == (string)ps[ i ] ), ps[ i + 1 ] );
-//    }
-//}
-//else if( r_attribute is LIB.Decode ) c.Decode.AddRange( ( (LIB.Decode)r_attribute ).Value.Select( o => template.Projects.FirstOrDefault( oo => oo.Name == o.ToString() ) ) );
-//else if( r_attribute is LIB.Encode ) c.Encode.AddRange( ( (LIB.Encode)r_attribute ).Value.Select( o => template.Projects.FirstOrDefault( oo => oo.Name == o.ToString() ) ) );
-//public static void fillDeclareLimits( Declare d, LIB.Limits ls, int i = 0 )
-//{
-//    if( d.Category == DataCategories.Array )
-//    {
-//        if( i >= ls.Value.Length )
-//        {
-//            throw new Exception( "the Limits is not enough length." );
-//        }
-//        d.MinLen = ls.Value[ i++ ];
-//        fillDeclareLimits( d.Childs[ 0 ], ls, i );
-//    }
-//    else if( d.Category == DataCategories.Generic )
-//    {
-//        if( i >= ls.Value.Length )
-//        {
-//            throw new Exception( "the Limits is not enough length." );
-//        }
-//        d.MinLen = ls.Value[ i++ ];
-//        if( i >= ls.Value.Length )
-//        {
-//            throw new Exception( "the Limits is not enough length." );
-//        }
-//        d.MaxLen = ls.Value[ i++ ];
-//        foreach( var cd in d.Childs )
-//        {
-//            fillDeclareLimits( cd, ls, i );
-//        }
-//    }
-//}           
-
-//// 整理引用关系, 调整 Encode, Decode
-//foreach( var c in template.Classes )
-//{
-//    // todo
-//}
-
-//// 整理 enable 属性( 合并 encode & decode )
-//foreach( var c in template.Classes )
-//{
-//    if( c.Encode.Count + c.Decode.Count == 0 )
-//        c.Enable = c.Encode = c.Decode = template.Projects;
-//    else
-//        c.Enable = c.Encode.Concat( c.Decode ).Distinct().ToList();
-//}
-//public static string projEnum = "__projects";           // 重要：生成过程中通过这个枚举来识别项目分类

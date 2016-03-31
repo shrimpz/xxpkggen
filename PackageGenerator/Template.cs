@@ -5,6 +5,7 @@ public class Template
 {
     public List<Struct> Structs = new List<Struct>();
     public List<string> Namespaces = new List<string>();
+    public List<Project> Projects = new List<Project>();
 }
 
 public enum StructTypes
@@ -12,6 +13,12 @@ public enum StructTypes
     Package,    // 包( 用于收发 )
     Struct,     // 结构体( 不直接收发 )
     Enum        // 枚举
+}
+
+public class Project
+{
+    public string Name = "";
+    public string Desc = "";
 }
 
 public class Struct
@@ -23,6 +30,7 @@ public class Struct
     public string Desc = "";
     public List<Member> Members = new List<Member>();
     public int RefCounter = 0;      // 被别的 Struct 引用的次数( 从大到小排可实现被引用的类前置 )
+    public List<Project> Projects = new List<Project>();
 
     public bool IsPackage
     {
@@ -123,7 +131,7 @@ public class Member
     public Struct Parent = null;
     public string Name = "";
     public string Desc = "";
-    public bool NoCompress = false;
+    public bool Compress = true;
 
     private void EnsureParentIsNotEnum()
     {
@@ -322,27 +330,3 @@ public class DataType
         }
     }
 }
-
-
-
-//public class Project
-//{
-//    public string Name = "";
-//    public string Desc = "";
-//}
-
-//public List<Project> Projects = new List<Project>();
-// public bool Enabled = true;
-//public List<Project> Enable = new List<Project>();    // 这个并不直接来源于属性，一但被某个属于某个 __project 的类引用到，则须生成到该 project
-//public List<Project> Decode = new List<Project>();    // 被引用到的类 即便没有直接设置 Attribute，也会继承引用类的设置
-//public List<Project> Encode = new List<Project>();    // 同上
-//public bool Get = false;
-//public bool Set = false;
-//public object Default = true;
-
-//public Dictionary<ClassField, object> Condations = new Dictionary<ClassField, object>();
-//public bool Enable
-//public decimal MinValue = 0;
-//public decimal MaxValue = 0;
-//public DecodeCondation DecodeCondation = new DecodeCondation( "", Operators.Equal, null );
-//public EncodeCondation EncodeCondation = new EncodeCondation( "", Operators.Equal, null );

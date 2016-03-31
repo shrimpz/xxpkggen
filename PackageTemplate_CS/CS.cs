@@ -2,12 +2,34 @@
 using PackageLibrary;
 using System;
 
-[Desc( "RootEnum1's desc" )]
+
+[ProjectTypes]
+enum PTS
+{
+    Client1,
+    Server1
+}
+
+[ProjectType(PTS.Client1, SendRecvType = SendRecvTypes.SendOnly)]
+class ClientToServer1
+{
+    int msg;
+}
+
+[ProjectType(PTS.Server1, SendRecvType = SendRecvTypes.SendOnly)]
+class Server1ToClient
+{
+    int msg;
+}
+
+
+
+[Desc("RootEnum1's desc")]
 enum Enum1 : byte
 {
-    [Desc( "RootEnum1 Item1's desc" )]
+    [Desc("RootEnum1 Item1's desc")]
     Item1 = 0,
-    [Desc( "RootEnum1 Ite2's desc" )]
+    [Desc("RootEnum1 Ite2's desc")]
     Item2,
     Item3 = 100,
     Item4,
@@ -15,33 +37,33 @@ enum Enum1 : byte
 }
 class RootPkg1
 {
-    Enum1          m_root_e1   ;
-    Ns1.Pkg2       m_ns1_pkg2  ;
-    byte           m_byte      ;
-    ushort         m_ushort    ;
-    uint           m_uint      ;
-    ulong          m_ulong     ;
-    sbyte          m_sbyte     ;
-    short          m_short     ;
-    int            m_int       ;
-    long           m_long      ;
-    double         m_double    ;
-    float          m_float     ;
-    bool           m_bool      ;
-    DateTime       m_DateTime  ;
+    Enum1 m_root_e1;
+    Ns1.Pkg2 m_ns1_pkg2;
+    byte m_byte;
+    ushort m_ushort;
+    uint m_uint;
+    ulong m_ulong;
+    sbyte m_sbyte;
+    short m_short;
+    int m_int;
+    long m_long;
+    double m_double;
+    float m_float;
+    bool m_bool;
+    DateTime m_DateTime;
 
-    [Limit( 4, 16 )]
-    string         m_string    ;
+    [Limit(4, 16)]
+    string m_string;
 
-    [Limit( 0, 128 )]
-    ByteBuffer     m_ByteBuffer;
+    [Limit(0, 128)]
+    ByteBuffer m_ByteBuffer;
 
-    [Limit( 8 )]
-    byte[]         m_bytes     ;
+    [Limit(8)]
+    byte[] m_bytes;
 
     List<Ns2.Enum1> m_ns2enum1s;
 
-    List<bool>     m_bools;
+    List<bool> m_bools;
 }
 namespace Ns1
 {

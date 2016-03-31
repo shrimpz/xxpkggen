@@ -13,7 +13,10 @@
 // Desc( "注释" )                           // 用于类 及类成员
 // Limit( [定长] | [ 最小长, 最大长 ] )     // 用于 string, 数组, 集合  还原时的长度安全限制
 // Struct                                   // 用于标记某个 包 属于纯结构体( 不会直接用于收发 )
-// NoCompress                               // 用于标记某成员 "不使用变长存储". 仅作用于 16/32/64 位整型成员
+// Compress                                 // 用于标记某成员 "使用变长存储". 仅作用于 32/64 位整型成员或 double
+// ProjectTypes                             // 用于标记某个 "位于全局范围的enum" 为 项目枚举
+// ProjectType                              // 用于标记某个 包 属于某个项目( 可配置多个项目复用 ), 参数就是 ProjectTypes 所标注的 enum
+
 
 /********************************************************/
 // BuildIn 数据类型:
@@ -35,14 +38,14 @@
 // ByteBuffer
 
 /********************************************************/
-// 数组 数据类型:
+// 数组 数据类型( 定长 ):
 /********************************************************/
 
 // BuildIn 或 枚举 或 class[]
 
 
 /********************************************************/
-// 集合 数据类型:
+// 集合 数据类型( 变长 ):
 /********************************************************/
 
 // List<BuildIn 或 枚举 或 class>
@@ -95,13 +98,14 @@ namespace PackageLibrary
     /// </summary>
     public class Desc : System.Attribute
     {
-        public Desc( string v ) { Value = v; }
+        public Desc(string v) { Value = v; }
         public string Value { get; set; }
     }
 
     /// <summary>
     /// 存储数据用的结构体. 生成时将不作为 "包" 对待
     /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Class)]
     public class Struct : System.Attribute
     {
     }
@@ -109,23 +113,26 @@ namespace PackageLibrary
     /// <summary>
     /// 标记 16-64 位整型变量  传输时不压缩( 默认压缩 )
     /// </summary>
-    public class NoCompress : System.Attribute
+    [System.AttributeUsage(System.AttributeTargets.Field)]
+    public class Compress : System.Attribute
     {
     }
 
     /// <summary>
     /// 针对最外层级的 数组, byte[], string 做长度限制。单个长度值为定长
     /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Field)]
     public class Limit : System.Attribute
     {
-        public Limit( int fix )
+        public Limit(int fix)
         {
             Min = fix;
             Max = fix;
         }
-        public Limit( int min, int max )
+        public Limit(int min, int max)
         {
-            if( max < min ) throw new System.Exception( "error: max < min" );
+            if (max < min)
+                throw new System.Exception("error: max < min");
             Min = min;
             Max = max;
         }
@@ -133,9 +140,40 @@ namespace PackageLibrary
         public int Max { get; set; }
     }
 
+    /// <summary>
+    /// 针对全局位置的特殊 enum 标记，以说明该 enum 为“项目分类”，并应用于 ProjectType 特性当中
+    /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Enum)]
+    public class ProjectTypes : System.Attribute { }
+
+
+    /// <summary>
+    /// 收发限定
+    /// </summary>
+    public enum SendRecvTypes
+    {
+        SendAndRecv,
+        SendOnly,
+        RecvOnly,
+    }
+
+    /// <summary>
+    /// 针对 enum, 包/结构体 标记，以限定“项目分类”。参数为 ProjectTypes 限定的 enum 项
+    /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Enum | System.AttributeTargets.Class, AllowMultiple = true)]
+    public class ProjectType : System.Attribute
+    {
+        public string Name { get; set; } = "";
+        public SendRecvTypes SendRecvType { get; set; } = SendRecvTypes.SendAndRecv;
+        public ProjectType(object pt)
+        {
+            Name = pt.ToString();
+        }
+    }
+
+
 
     // more attribute here ...
-
 }
 
 

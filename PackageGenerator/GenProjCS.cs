@@ -346,7 +346,7 @@ public static partial class PackageHandler
         public static void Gen_custom_config(StringBuilder sb, Template t)
         {
             // 扫所有包生成   [{ "OpCode" : 1, "ForwardTo" : "Client", "Deny" : false }, { "OpCode" : 2, "ForwardTo" : "Lobby", "Deny" : false }, { "OpCode" : 3, "ForwardTo" : "AppShop", "Deny" : false }]
-            var packages = t.Structs.Where(a => a.IsPackage).ToList();
+            var packages = t.Structs.Where(a => a.IsPackage && a.Projects.Count == 0).ToList();
             sb.Clear();
             sb.Append("[");
             bool isfirst = true;
@@ -369,7 +369,7 @@ public static partial class PackageHandler
             }
             foreach (var proj in t.Projects)
             {
-                var proj_packages = packages.Where(a => a.Projects.Contains(proj)).ToList();
+                var proj_packages = t.Structs.Where(a => a.IsPackage && a.Projects.Contains(proj)).ToList();
                 foreach (var pkg in proj_packages)
                 {
                     if (!isfirst)

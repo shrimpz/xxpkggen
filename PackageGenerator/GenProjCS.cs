@@ -372,9 +372,9 @@ public static partial class PackageHandler
                 sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + "_Partial.cs"));
 
                 Gen_tn_pn_Handlers(sb, t, proj_packages);
-                sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + "_Handlers.cs"));
+                sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + "_Handlers_CSharp.txt"));
 
-                Gen_tn_pn_ByteBuffer_Ext(sb, proj_enums);
+                Gen_tn_pn_ByteBuffer_Ext(sb, proj_packages);
                 sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + "_ByteBuffer_Ext.cs"));
             }
 
@@ -394,9 +394,9 @@ public static partial class PackageHandler
                 sb.WriteToFile(Path.Combine(outDir, "_" + t.Name + "_Partial.cs"));
 
                 Gen_tn_pn_Handlers(sb, t, global_packages);
-                sb.WriteToFile(Path.Combine(outDir, "_" + t.Name + "_Handlers.cs"));
+                sb.WriteToFile(Path.Combine(outDir, "_" + t.Name + "_Handlers_CSharp.txt"));
 
-                Gen_tn_pn_ByteBuffer_Ext(sb, global_enums);
+                Gen_tn_pn_ByteBuffer_Ext(sb, global_packages);
                 sb.WriteToFile(Path.Combine(outDir, "_" + t.Name + "_ByteBuffer_Ext.cs"));
             }
 

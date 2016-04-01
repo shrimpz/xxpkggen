@@ -14,9 +14,10 @@
 // Limit( [定长] | [ 最小长, 最大长 ] )     // 用于 string, 数组, 集合  还原时的长度安全限制
 // Struct                                   // 用于标记某个 包 属于纯结构体( 不会直接用于收发 )
 // Compress                                 // 用于标记某成员 "使用变长存储". 仅作用于 32/64 位整型成员或 double
+// Deprecated                               // 禁用标志( 还是会生成，但是可能会带 否决标记 )
 // ProjectTypes                             // 用于标记某个 "位于全局范围的enum" 为 项目枚举
 // ProjectType                              // 用于标记某个 包 属于某个项目( 可配置多个项目复用 ), 参数就是 ProjectTypes 所标注的 enum
-// Deprecated                               // 禁用标志( 还是会生成，但是可能会带 否决标记 )
+// From, To, FromTo                         // ProjectType 的简化 / 复合版
 
 
 /********************************************************/
@@ -168,14 +169,60 @@ namespace PackageLibrary
         public SendRecvTypes SendRecvType { get; set; } = SendRecvTypes.SendAndRecv;
         public ProjectType(object pt)
         {
+            System.Diagnostics.Debug.Assert(pt.GetType().IsEnum);
             Name = pt.ToString();
         }
     }
 
+    /// <summary>
+    ///  针对 enum, 包/结构体 标记，会根据语种生成 否决 相关代码或标记或注释
+    /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Enum | System.AttributeTargets.Class)]
     public class Deprecated : System.Attribute
     {
         public bool Error { get; set; }
+    }
+
+
+    // 下面是 ProjectType 的三种特化版本
+
+    [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = true)]
+    public class FromTo : System.Attribute
+    {
+        public string Sender { get; private set; }
+        public string Receiver { get; private set; }
+
+        public FromTo(object sender, object receiver)
+        {
+            System.Diagnostics.Debug.Assert(sender.GetType().IsEnum);
+            System.Diagnostics.Debug.Assert(receiver.GetType().IsEnum);
+            Sender = sender.ToString();
+            Receiver = receiver.ToString();
+        }
+    }
+
+    [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = true)]
+    public class From : System.Attribute
+    {
+        public string Sender { get; private set; }
+
+        public From(object sender)
+        {
+            System.Diagnostics.Debug.Assert(sender.GetType().IsEnum);
+            Sender = sender.ToString();
+        }
+    }
+
+    [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = true)]
+    public class To : System.Attribute
+    {
+        public string Receiver { get; private set; }
+
+        public To(object receiver)
+        {
+            System.Diagnostics.Debug.Assert(receiver.GetType().IsEnum);
+            Receiver = receiver.ToString();
+        }
     }
 
     // more attribute here ...

@@ -86,15 +86,16 @@ namespace PackageGenerator
                 c.Desc = r_class.GetAttrDesc();
                 c.Deprecated = r_class.GetAttrDeprecated();
 
-                var ps = r_class.GetProjectTypeNames();
-                c.Projects.AddRange(template.Projects.Where(a => ps.Contains(a.Name)));
+                var ps = r_class.GetStructProjects(template);
+                c.Projects = ps;
+
                 if (c.IsPackage)
                 {
                     if (c.Projects.Count > 0)
                     {
                         foreach (var p in c.Projects)
                         {
-                            c.PackageId = p.MaxPackageId++;         // 填包自增
+                            c.PackageId = p.Project.MaxPackageId++;         // 填包自增
                         }
                     }
                     else
@@ -225,14 +226,51 @@ namespace PackageGenerator
             return false;
         }
 
-        public static List<string> GetProjectTypeNames<T>(this T t) where T : _MemberInfo
+        public static List<StructProject> GetStructProjects<MI>(this MI mi, Template t) where MI : _MemberInfo
         {
-            var rtv = new List<string>();
-            foreach (var r_attribute in t.GetCustomAttributes(false))
+            var rtv = new List<StructProject>();
+            foreach (var r_attribute in mi.GetCustomAttributes(false))
             {
                 if (r_attribute is LIB.ProjectType)
                 {
-                    rtv.Add(((LIB.ProjectType)r_attribute).Name);
+                    var att = ((LIB.ProjectType)r_attribute);
+                    rtv.Add(new StructProject
+                    {
+                        Project = t.Projects.First(a => a.Name == att.Name),
+                        SendRecvType = att.SendRecvType
+                    });
+                }
+                else if (r_attribute is LIB.From)
+                {
+                    var att = ((LIB.From)r_attribute);
+                    rtv.Add(new StructProject
+                    {
+                        Project = t.Projects.First(a => a.Name == att.Sender),
+                        SendRecvType = LIB.SendRecvTypes.SendOnly
+                    });
+                }
+                else if (r_attribute is LIB.To)
+                {
+                    var att = ((LIB.To)r_attribute);
+                    rtv.Add(new StructProject
+                    {
+                        Project = t.Projects.First(a => a.Name == att.Receiver),
+                        SendRecvType = LIB.SendRecvTypes.RecvOnly
+                    });
+                }
+                else if (r_attribute is LIB.FromTo)
+                {
+                    var att = ((LIB.FromTo)r_attribute);
+                    rtv.Add(new StructProject
+                    {
+                        Project = t.Projects.First(a => a.Name == att.Receiver),
+                        SendRecvType = LIB.SendRecvTypes.RecvOnly
+                    });
+                    rtv.Add(new StructProject
+                    {
+                        Project = t.Projects.First(a => a.Name == att.Sender),
+                        SendRecvType = LIB.SendRecvTypes.SendOnly
+                    });
                 }
             }
             return rtv;

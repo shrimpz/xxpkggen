@@ -6,7 +6,7 @@ public class Template
     public List<Struct> Structs = new List<Struct>();
     public List<string> Namespaces = new List<string>();
     public List<Project> Projects = new List<Project>();
-    public int MaxPackageId = 0;
+    public int MaxPackageId = 1;
     public string Name = "";
 }
 
@@ -22,7 +22,13 @@ public class Project
     public int ProjectId = 1;              // 包id前缀. 0 被用作全局的包
     public string Name = "";
     public string Desc = "";
-    public int MaxPackageId = 0;
+    public int MaxPackageId = 1;
+}
+
+public class StructProject
+{
+    public Project Project;
+    public PackageLibrary.SendRecvTypes SendRecvType;
 }
 
 public class Struct
@@ -35,7 +41,7 @@ public class Struct
     public bool? Deprecated = null;
     public List<Member> Members = new List<Member>();
     public int RefCounter = 0;      // 被别的 Struct 引用的次数( 从大到小排可实现被引用的类前置 )
-    public List<Project> Projects = new List<Project>();
+    public List<StructProject> Projects = new List<StructProject>();            // 包 于 项目中可收 或/和 发
 
     public bool IsPackage
     {

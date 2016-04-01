@@ -11,13 +11,15 @@ enum PTS
 }
 
 [Deprecated]
-[ProjectType(PTS.Client1, SendRecvType = SendRecvTypes.SendOnly)]
+//[ProjectType(PTS.Client1, SendRecvType = SendRecvTypes.SendOnly)]
+[FromTo(PTS.Client1, PTS.Server1)]
 class ClientToServer1
 {
     int msg;
 }
 
-[ProjectType(PTS.Server1, SendRecvType = SendRecvTypes.SendOnly)]
+//[ProjectType(PTS.Server1, SendRecvType = SendRecvTypes.SendOnly)]
+[FromTo(PTS.Server1, PTS.Client1)]
 class Server1ToClient
 {
     int msg;

@@ -191,7 +191,7 @@ partial class " + c.Name + @"
 ");
         }
 
-        public static void Gen_tn_pn_Partial(StringBuilder sb, Template t, List<Struct> proj_enums, List<Struct> proj_packages_and_structs)
+        public static void Gen_tn_pn_Partial(StringBuilder sb, Template t, List<Struct> proj_enums, List<Struct> proj_packages_and_structs, Project proj = null)
         {
             // 文件头部
             sb.Clear();
@@ -210,6 +210,14 @@ namespace " + t.Name + @"
 
             foreach (var c in proj_packages_and_structs)
             {
+                bool genWriteTo = true, genReadFrom = true;
+                if (proj != null)
+                {
+                    var srt = c.Projects.First(a => a.Project == proj)?.SendRecvType;
+                    genWriteTo = (srt == null || srt == PackageLibrary.SendRecvTypes.SendOnly || srt == PackageLibrary.SendRecvTypes.SendAndRecv);
+                    genReadFrom = (srt == null || srt == PackageLibrary.SendRecvTypes.RecvOnly || srt == PackageLibrary.SendRecvTypes.SendAndRecv);
+                }
+
                 // namespace xxx {
                 if (c.Namespace != "")
                 {
@@ -219,33 +227,58 @@ namespace " + c.Namespace + @"
                 }
 
                 // partial class xxx
+
+                var intrface = "";
+                if (genReadFrom)
+                {
+                    intrface += "IBBReader";
+                }
+                if (genWriteTo)
+                {
+                    if (intrface != "")
+                    {
+                        intrface += ", ";
+                    }
+                    intrface += "IBBWriter";
+                }
+
                 sb.Append(@"
-public partial class " + c.Name + @" : IBBReader, IBBWriter 
-{
+public partial class " + c.Name + @" : " + intrface + @" 
+{");
+                if (genWriteTo)
+                {
+                    sb.Append(@"
     public void WriteTo( ByteBuffer bb )
     {");
-                foreach (var f in c.Members)
+                    foreach (var f in c.Members)
+                    {
+                        sb.Append(@"
+        bb." + (f.Compress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Write( " + f.Name + " );");
+                    }
+                    sb.Append(@" 
+    }
+");
+                }
+                if (genReadFrom)
                 {
                     sb.Append(@"
-        bb." + (f.Compress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Write( " + f.Name + " );");
-                }
-                sb.Append(@" 
-    }
-
     public void ReadFrom( ByteBuffer bb )
     {");
-                foreach (var f in c.Members)
-                {
-                    sb.Append(@"
-        bb." + (f.Compress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Read( ref " + f.Name);
-                    if (f.Type.IsContainer && !f.Type.IsArray)
+                    foreach (var f in c.Members)
                     {
-                        sb.Append(@", " + f.MinLen + ", " + f.MaxLen);
+                        sb.Append(@"
+        bb." + (f.Compress ? "" : (f.Type.Compressable() ? "Var" : "")) + "Read( ref " + f.Name);
+                        if (f.Type.IsContainer && !f.Type.IsArray)
+                        {
+                            sb.Append(@", " + f.MinLen + ", " + f.MaxLen);
+                        }
+                        sb.Append(@" );");
                     }
-                    sb.Append(@" );");
+                    sb.Append(@"
+    }
+");
                 }
                 sb.Append(@"
-    }
 };");
                 // namespace } // xxx
                 if (c.Namespace != "")
@@ -318,7 +351,7 @@ public static partial class PackageHandler
 ");
         }
 
-        public static void Gen_tn_pn_ByteBuffer_Ext(StringBuilder sb, List<Struct> proj_packages)
+        public static void Gen_tn_pn_ByteBuffer_Ext(StringBuilder sb, List<Struct> proj_packages, Project proj = null)
         {
             sb.Clear();
             sb.Append(@"namespace xxlib
@@ -328,6 +361,15 @@ public static partial class PackageHandler
     {");
             foreach (var c in proj_packages)
             {
+                if (proj != null)
+                {
+                    var srt = c.Projects.First(a => a.Project == proj)?.SendRecvType;
+                    bool genWritePackage = (srt == null || srt == PackageLibrary.SendRecvTypes.SendOnly || srt == PackageLibrary.SendRecvTypes.SendAndRecv);
+                    if (!genWritePackage)
+                    {
+                        continue;
+                    }
+                }
                 var tn = GetNamespace(c) + "." + c.Name;
                 sb.Append(@"
         public static void WritePackage( this ByteBuffer bb, " + tn + @" v )
@@ -369,7 +411,7 @@ public static partial class PackageHandler
             }
             foreach (var proj in t.Projects)
             {
-                var proj_packages = t.Structs.Where(a => a.IsPackage && a.Projects.Contains(proj)).ToList();
+                var proj_packages = t.Structs.Where(a => a.IsPackage && a.Projects.Any(b => b.Project == proj)).ToList();
                 foreach (var pkg in proj_packages)
                 {
                     if (!isfirst)
@@ -400,9 +442,9 @@ public static partial class PackageHandler
             // 生成项目的
             foreach (var proj in t.Projects)
             {
-                var proj_enums = enums.Where(a => a.Projects.Contains(proj)).ToList();
-                var proj_packages_and_structs = packages_and_structs.Where(a => a.Projects.Contains(proj)).ToList();
-                var proj_packages = packages.Where(a => a.Projects.Contains(proj)).ToList();
+                var proj_enums = enums.Where(a => a.Projects.Any(b => b.Project == proj)).ToList();
+                var proj_packages_and_structs = packages_and_structs.Where(a => a.Projects.Any(b => b.Project == proj)).ToList();
+                var proj_packages = packages.Where(a => a.Projects.Any(b => b.Project == proj)).ToList();
 
                 Gen_tn_pn_ByteBuffer_Partial(sb, proj_enums);
                 sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + "_ByteBuffer_Partial.cs"));
@@ -410,13 +452,13 @@ public static partial class PackageHandler
                 Gen_tn_pn(sb, t, proj_enums, proj_packages_and_structs, proj);
                 sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + ".cs"));
 
-                Gen_tn_pn_Partial(sb, t, proj_enums, proj_packages_and_structs);
+                Gen_tn_pn_Partial(sb, t, proj_enums, proj_packages_and_structs, proj);
                 sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + "_Partial.cs"));
 
                 Gen_tn_pn_Handlers(sb, t, proj_packages);
                 sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + "_Handlers_CSharp.txt"));
 
-                Gen_tn_pn_ByteBuffer_Ext(sb, proj_packages);
+                Gen_tn_pn_ByteBuffer_Ext(sb, proj_packages, proj);
                 sb.WriteToFile(Path.Combine(outDir, t.Name + "_" + proj.Name + "_ByteBuffer_Ext.cs"));
             }
 

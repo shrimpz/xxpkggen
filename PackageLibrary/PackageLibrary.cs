@@ -196,6 +196,7 @@ namespace PackageLibrary
         {
             System.Diagnostics.Debug.Assert(sender.GetType().IsEnum);
             System.Diagnostics.Debug.Assert(receiver.GetType().IsEnum);
+            System.Diagnostics.Debug.Assert(sender != receiver);
             Sender = sender.ToString();
             Receiver = receiver.ToString();
         }

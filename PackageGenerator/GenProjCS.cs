@@ -160,7 +160,7 @@ partial class " + c.Name + @"
                 if (c.StructType == StructTypes.Package)
                 {
                     sb.Append(@"
-    public const ushort packageId = 0x" + (proj == null ? "00" : proj.ProjectId.ToString("x2")) + c.PackageId.ToString("x2") + @"u;
+    public const ushort packageId = 0x" + c.PackageId.ToString("x2") + @"u;
 ");
                 }
 
@@ -423,7 +423,7 @@ public static partial class PackageHandler
                         isfirst = false;
                     }
                     var deny = pkg.Deprecated == null ? "null" : pkg.Deprecated.ToString().ToLower();
-                    sb.Append("{\"OpCode\":" + (proj.ProjectId * 256 + pkg.PackageId) + ", \"ForwardTo\":\"" + proj.Name + "\", \"Deny\":" + deny + "}");
+                    sb.Append("{\"OpCode\":" + pkg.PackageId + ", \"ForwardTo\":\"" + proj.Name + "\", \"Deny\":" + deny + "}");
                 }
             }
             sb.Append("]");

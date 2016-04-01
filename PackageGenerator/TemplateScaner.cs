@@ -95,7 +95,11 @@ namespace PackageGenerator
                     {
                         foreach (var p in c.Projects)
                         {
-                            c.PackageId = p.Project.MaxPackageId++;         // 填包自增
+                            if (p.SendRecvType == PackageLibrary.SendRecvTypes.SendOnly
+                                || p.SendRecvType == PackageLibrary.SendRecvTypes.SendAndRecv)
+                            {
+                                c.PackageId = p.Project.ProjectId * 256 + p.Project.MaxPackageId++;         // 填包自增
+                            }
                         }
                     }
                     else
